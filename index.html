@@ -6,17 +6,19 @@
 <title>Amsterdam–Warsaw Line</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,900;1,600&family=Cormorant+Garamond:ital@1&family=Figtree:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
   :root{
     color-scheme: dark;
-    --bg:#0D1728; --land:#132139; --sea:#0A1221; --coast:#233756;
-    --panel:#162540; --panel-2:#1C2E4E; --line:#2A3D5E;
-    --ink:#EAF0FA; --muted:#8FA0BE; --faint:#5A6B8A;
-    --paper:#F2F4F8; --paper-ink:#18223A; --paper-muted:#66728A;
-    --misha:#F7D154; --syrine:#BBA4FF;
+    --bg:#2B0714; --land:#3A0F1E; --sea:#1A040C; --coast:#A3315C;
+    --panel:#33101F; --panel-2:#411628; --line:#5C2A42;
+    --ink:#F6E2C8; --muted:#C7A0A8; --faint:#8A5C68;
+    --paper:#F7ECDD; --paper-ink:#3A0F1E; --paper-muted:#8A6A56;
+    --misha:#E8B56A; --syrine:#E8567F;
     --ok:#4FCB8E; --warn:#F2A33A; --bad:#E5534B;
-    --display:"Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+    --display:"Fraunces", "Georgia", serif;
+    --eyebrow-font:"Cormorant Garamond", "Georgia", serif;
+    --ui:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
     --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
   }
@@ -29,16 +31,17 @@
   .wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 
   header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px}
-  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-  h1{font-family:var(--display);font-weight:900;font-size:clamp(38px,8vw,64px);line-height:.9;letter-spacing:.01em;margin:6px 0 0;text-transform:uppercase;text-wrap:balance}
-  h1 .arrow{color:var(--misha)}
+  .eyebrow{font-family:var(--eyebrow-font);font-style:italic;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--misha)}
+  h1{font-family:var(--display);font-weight:900;font-size:clamp(36px,8vw,60px);line-height:1;letter-spacing:0;margin:6px 0 0;text-wrap:balance}
+  h1 .arrow{color:var(--syrine);font-style:italic}
+  h1 .heart{display:inline-block;color:var(--syrine);font-size:.45em;vertical-align:middle;margin-left:10px;transform:rotate(-8deg)}
   .lede{color:var(--muted);max-width:56ch;margin:10px 0 0;font-size:15px}
   .lede b{color:var(--ink);font-weight:600}
 
   .players{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start}
   .player{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 14px 8px 8px;min-width:150px}
   .player.active{border-color:var(--pc);box-shadow:0 0 0 1px var(--pc) inset}
-  .token{width:34px;height:34px;border-radius:9px;background:var(--pc);color:#141B2B;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:20px}
+  .token{width:34px;height:34px;border-radius:9px;background:var(--pc);color:#2B0714;display:grid;place-items:center;font-family:var(--ui);font-weight:900;font-size:20px}
   .pname{font-weight:600;font-size:14px;line-height:1.2}
   .pmeta{font-family:var(--mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
 
@@ -48,9 +51,9 @@
   .invite .hint{font-size:11.5px;color:var(--muted);margin:0;line-height:1.35}
   .statusline{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);margin:0;flex-wrap:wrap}
   .whoami{font-size:12px;color:var(--muted);background:none;border:none;padding:0;text-decoration:underline;text-underline-offset:2px;cursor:pointer;margin-left:auto}
-  .idpick{position:fixed;inset:0;background:rgba(6,10,20,.72);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .idpick{position:fixed;inset:0;background:rgba(15,2,8,.78);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
   .idcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:360px;width:100%;display:flex;flex-direction:column;gap:14px;text-align:center}
-  .idcard h2{font-family:var(--display);font-size:28px;margin:0;text-transform:uppercase}
+  .idcard h2{font-family:var(--ui);font-size:24px;font-weight:800;margin:0}
   .idcard p{color:var(--muted);font-size:14px;margin:0}
   .idbtns{display:flex;flex-direction:column;gap:10px}
   .idbtns button{padding:14px;font-size:16px}
@@ -74,7 +77,7 @@
   .route.win .car{filter:drop-shadow(0 0 5px rgba(255,255,255,.55))}
   @keyframes pulse{50%{fill-opacity:.35}}
   .city-label{font-family:var(--body);font-weight:600;font-size:14px;fill:var(--ink);paint-order:stroke;stroke:var(--land);stroke-width:4px;stroke-linejoin:round}
-  .city-label.end{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:.04em;text-transform:uppercase}
+  .city-label.end{font-family:var(--ui);font-weight:800;font-size:20px;letter-spacing:.04em;text-transform:uppercase}
   .geo-label{font-family:var(--mono);font-size:11px;letter-spacing:.3em;fill:var(--faint);text-transform:uppercase}
   .board-foot{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid var(--line);background:var(--panel);font-size:13px;color:var(--muted)}
   .progress b{color:var(--ink);font-weight:600}
@@ -82,7 +85,7 @@
   .play{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;align-items:start}
   @media (max-width:760px){.play{grid-template-columns:1fr}}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px}
-  .panel h2{font-family:var(--display);font-weight:800;font-size:26px;line-height:1;margin:0;text-transform:uppercase;letter-spacing:.02em}
+  .panel h2{font-family:var(--ui);font-weight:800;font-size:22px;line-height:1.15;margin:0;letter-spacing:.01em}
   .route-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
   .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px 4px 8px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line)}
   .chip i{width:10px;height:10px;border-radius:3px;background:var(--c)}
@@ -92,25 +95,25 @@
   .ticket{position:relative;background:var(--paper);color:var(--paper-ink);border-radius:12px;display:grid;grid-template-columns:64px 1fr;min-height:108px;
     -webkit-mask:radial-gradient(circle 9px at 64px 0,#0000 98%,#000) top/100% 51% no-repeat,radial-gradient(circle 9px at 64px 100%,#0000 98%,#000) bottom/100% 51% no-repeat;
             mask:radial-gradient(circle 9px at 64px 0,#0000 98%,#000) top/100% 51% no-repeat,radial-gradient(circle 9px at 64px 100%,#0000 98%,#000) bottom/100% 51% no-repeat}
-  .stub{background:var(--c);border-radius:12px 0 0 12px;border-right:2px dashed rgba(20,27,43,.35);display:flex;align-items:center;justify-content:center}
-  .stub span{writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--display);font-weight:900;font-size:22px;letter-spacing:.06em;color:#141B2B;text-transform:uppercase}
+  .stub{background:var(--c);border-radius:12px 0 0 12px;border-right:2px dashed rgba(58,15,30,.35);display:flex;align-items:center;justify-content:center}
+  .stub span{writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--ui);font-weight:800;font-size:19px;letter-spacing:.05em;color:var(--paper-ink);text-transform:uppercase}
   .tbody{padding:14px 16px 14px 18px;display:flex;flex-direction:column;gap:6px;justify-content:center}
   .tmeta{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--paper-muted)}
-  .q{font-size:18px;font-weight:600;line-height:1.3;margin:0;text-wrap:pretty}
+  .q{font-family:var(--display);font-style:italic;font-weight:600;font-size:19px;line-height:1.35;margin:0;text-wrap:pretty}
 
   .actions{display:flex;flex-wrap:wrap;gap:10px}
   button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);padding:10px 14px;font-weight:600;font-size:14px}
   button:hover{border-color:var(--muted)}
   button:focus-visible{outline:2px solid var(--misha);outline-offset:2px}
-  button.primary{background:var(--misha);border-color:var(--misha);color:#141B2B}
+  button.primary{background:linear-gradient(135deg,var(--syrine),var(--misha));border-color:transparent;color:#2B0714}
   button.primary.for-M{background:var(--misha);border-color:var(--misha)}
   button.primary.for-S{background:var(--syrine);border-color:var(--syrine)}
-  button.big{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.03em;text-transform:uppercase;padding:12px 18px;width:100%}
+  button.big{font-family:var(--ui);font-weight:800;font-size:19px;letter-spacing:.02em;text-transform:uppercase;padding:12px 18px;width:100%}
   button.ghost{background:transparent}
   button.link{background:none;border:none;padding:4px 0;color:var(--muted);font-weight:500;text-decoration:underline;text-underline-offset:3px}
   button#safeBtn,button#boldBtn,button.rate{flex:1;min-width:150px;text-align:center}
   button small{display:block;font-weight:500;color:var(--muted);margin-top:2px;font-size:11.5px}
-  button.primary small{color:#141B2B;opacity:.7}
+  button.primary small{color:#2B0714;opacity:.75}
   .copybox{width:100%;min-height:120px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;font:13px/1.45 var(--mono)}
   .toast{font-size:13px;color:var(--misha);min-height:1.2em;margin:0}
 
@@ -143,7 +146,7 @@
   <header>
     <div>
       <div class="eyebrow">Destination ticket · AMS → WAW · 2 players</div>
-      <h1>Amsterdam <span class="arrow">⇄</span> Warsaw</h1>
+      <h1>Amsterdam <span class="arrow">⇄</span> Warsaw<span class="heart">♥</span></h1>
       <p class="lede">Take turns drawing a card for each other. Every card gives <b>two questions</b>, and the other person answers one or both in your chat. Answer just one and the route claims safely. Go for both, and the other person rates it — could be worth more, could be worth less. Connect the two cities, and <b>whoever laid the most cars picks the first date spot.</b></p>
     </div>
     <div class="players" id="players"></div>
@@ -160,7 +163,7 @@
       <h2>Who's playing?</h2>
       <p>This is just for this phone, so the game can call you "you" instead of your own name.</p>
       <div class="idbtns">
-        <button type="button" class="primary" data-me="M">I'm Misha</button>
+        <button type="button" class="primary for-M" data-me="M">I'm Misha</button>
         <button type="button" class="primary" style="background:var(--syrine);border-color:var(--syrine)" data-me="S">I'm Syrine</button>
       </div>
     </div>
@@ -200,7 +203,7 @@
   const other = p => p === "M" ? "S" : "M";
 
   const THEMES = {
-    flirty:{name:"Flirty Express", short:"Flirty", desc:"Cheeky questions. Blushing allowed.", c:"#EE6FAE", qs:[
+    flirty:{name:"Flirty Express", short:"Flirty", desc:"Cheeky questions. Blushing allowed.", c:"#E8567F", qs:[
       "First thing you noticed on my profile?",
       "Be honest: what made you swipe right?",
       "Rate my cat-photo game from 1 to 10. Be generous.",
@@ -217,7 +220,7 @@
       "Send a selfie of your face reading this question.",
       "Finish the sentence: \"The way to my heart is…\""
     ]},
-    love:{name:"Relationship Goals", short:"Relationship", desc:"What you're actually looking for.", c:"#E5534B", qs:[
+    love:{name:"Relationship Goals", short:"Relationship", desc:"What you're actually looking for.", c:"#C9294F", qs:[
       "What's your love language? No hedging.",
       "Ideal Sunday together: out exploring, or never leaving the house?",
       "The biggest green flag someone can have?",
@@ -231,7 +234,7 @@
       "What does feeling really supported look like to you?",
       "Something small a partner could do that would win you over completely?"
     ]},
-    rewind:{name:"Rewind", short:"Past", desc:"Where you've come from.", c:"#C8925F", qs:[
+    rewind:{name:"Rewind", short:"Past", desc:"Where you've come from.", c:"#C98A3D", qs:[
       "You at 15, in three words?",
       "The most chaotic thing you did as a kid that your family still brings up?",
       "First concert you ever went to. Proud or embarrassed?",
@@ -243,7 +246,7 @@
       "Most memorable birthday so far?",
       "A person who changed the direction of your life?"
     ]},
-    future:{name:"Future Line", short:"Future", desc:"Where you're headed.", c:"#5E8FF0", qs:[
+    future:{name:"Future Line", short:"Future", desc:"Where you're headed.", c:"#8A6FD6", qs:[
       "Where do you want to wake up on your 35th birthday?",
       "One skill you're definitely learning in the next five years?",
       "Dream home: city apartment, sea view, or somewhere nobody can find you?",
@@ -255,7 +258,7 @@
       "Retirement plan: beach, vineyard, or still running the world?",
       "The next big thing you're saving up for?"
     ]},
-    career:{name:"Career Junction", short:"Career", desc:"Ambition, work and big plans.", c:"#A9B4C8", qs:[
+    career:{name:"Career Junction", short:"Career", desc:"Ambition, work and big plans.", c:"#B08D75", qs:[
       "If you started a company tomorrow, what would it be?",
       "The job you'd happily do for free?",
       "Worst job you've ever had?",
@@ -267,7 +270,7 @@
       "What would your colleagues say your superpower is?",
       "One thing you'd change about how people work?"
     ]},
-    health:{name:"Wellness Loop", short:"Health", desc:"Gym, rest and resets.", c:"#46B98A", qs:[
+    health:{name:"Wellness Loop", short:"Health", desc:"Gym, rest and resets.", c:"#5FAE8A", qs:[
       "Gym, yoga or long walks: what actually resets you?",
       "Your non-negotiable morning ritual?",
       "Your real sleep schedule. No lying.",
@@ -279,7 +282,7 @@
       "Sunrise hike or spa day?",
       "Gym playlist: send the song that gets you through the last set."
     ]},
-    travel:{name:"Wanderlust", short:"Travel", desc:"Trips, beaches and window seats.", c:"#2DC2C0", qs:[
+    travel:{name:"Wanderlust", short:"Travel", desc:"Trips, beaches and window seats.", c:"#3FAFAE", qs:[
       "Window or aisle? This matters.",
       "The city that surprised you most?",
       "A beach you'd fly back to tomorrow?",
@@ -291,7 +294,7 @@
       "Night train across Europe or fly and be done?",
       "Hotel, apartment, or a friend's sofa?"
     ]},
-    silly:{name:"Silly Detour", short:"Silly", desc:"Absolute nonsense. Mandatory.", c:"#F2A33A", qs:[
+    silly:{name:"Silly Detour", short:"Silly", desc:"Absolute nonsense. Mandatory.", c:"#E8B56A", qs:[
       "What animal would you be at a party, and why?",
       "Pineapple on pizza. Defend your answer.",
       "You're a cat on an Amsterdam balcony for a day. What's the plan?",
@@ -452,7 +455,7 @@
       const mx=(A.x+B.x)/2, my=(A.y+B.y)/2;
       const badge = el("g",{class:"badge",transform:`translate(${mx.toFixed(1)} ${my.toFixed(1)})`,visibility:"hidden"},grp);
       el("circle",{r:11,fill:"var(--misha)",stroke:"var(--bg)","stroke-width":2.5},badge);
-      const bt = el("text",{"text-anchor":"middle",y:5,"font-family":"Big Shoulders Display, Impact, sans-serif","font-weight":900,"font-size":15,fill:"#141B2B"},badge); bt.textContent="M";
+      const bt = el("text",{"text-anchor":"middle",y:5,"font-family":"Figtree, sans-serif","font-weight":900,"font-size":15,fill:"#2B0714"},badge); bt.textContent="M";
       grp.addEventListener("click",()=>pickRoute(r.id));
       grp.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pickRoute(r.id);} });
     });
