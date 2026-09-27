@@ -46,7 +46,14 @@
   .inviterow{display:flex;gap:8px;flex-wrap:wrap}
   .inviterow input{flex:1;min-width:180px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:12px var(--mono)}
   .invite .hint{font-size:11.5px;color:var(--muted);margin:0;line-height:1.35}
-  .statusline{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);margin:0}
+  .statusline{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);margin:0;flex-wrap:wrap}
+  .whoami{font-size:12px;color:var(--muted);background:none;border:none;padding:0;text-decoration:underline;text-underline-offset:2px;cursor:pointer;margin-left:auto}
+  .idpick{position:fixed;inset:0;background:rgba(6,10,20,.72);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .idcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:360px;width:100%;display:flex;flex-direction:column;gap:14px;text-align:center}
+  .idcard h2{font-family:var(--display);font-size:28px;margin:0;text-transform:uppercase}
+  .idcard p{color:var(--muted);font-size:14px;margin:0}
+  .idbtns{display:flex;flex-direction:column;gap:10px}
+  .idbtns button{padding:14px;font-size:16px}
   .dot{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:none}
   .dot.online{background:var(--ok);box-shadow:0 0 0 3px rgba(79,203,142,.18)}
   .dot.offline{background:var(--bad)}
@@ -145,7 +152,18 @@
   <div class="invite">
     <p class="hint" id="inviteHint">Send this link once. After that, whatever either of you does shows up on both phones within a few seconds — no codes to paste.</p>
     <div class="inviterow"><input readonly id="inviteUrl" onclick="this.select()"><button type="button" id="inviteCopy">Copy link</button></div>
-    <p class="statusline" id="statusline"><span class="dot" id="statusdot"></span><span id="statustext">Connecting…</span></p>
+    <p class="statusline" id="statusline"><span class="dot" id="statusdot"></span><span id="statustext">Connecting…</span><button type="button" class="whoami" id="whoamiBtn"></button></p>
+  </div>
+
+  <div class="idpick" id="idpick" hidden>
+    <div class="idcard">
+      <h2>Who's playing?</h2>
+      <p>This is just for this phone, so the game can call you "you" instead of your own name.</p>
+      <div class="idbtns">
+        <button type="button" class="primary" data-me="M">I'm Misha</button>
+        <button type="button" class="primary" style="background:var(--syrine);border-color:var(--syrine)" data-me="S">I'm Syrine</button>
+      </div>
+    </div>
   </div>
 
   <section class="board" aria-label="Route map">
@@ -337,6 +355,20 @@
   let rev = 0;
   let rating = false; // transient UI step, not persisted
 
+  // ---------- per-device identity: who is holding THIS phone ----------
+  let ME = null;
+  try{ const saved = localStorage.getItem("line-me"); if (saved==="M" || saved==="S") ME = saved; }catch(e){}
+  function setMe(p){
+    ME = p;
+    try{ localStorage.setItem("line-me", p); }catch(e){}
+    document.getElementById("idpick").hidden = true;
+    render();
+  }
+  // "You" for whichever player is on this phone, their real name for the other.
+  function label(p){ return p===ME ? "You" : PLAYERS[p].name; }
+  document.querySelectorAll("#idpick [data-me]").forEach(b=>{ b.onclick=()=>setMe(b.dataset.me); });
+  document.getElementById("whoamiBtn").onclick = ()=>{ document.getElementById("idpick").hidden = false; };
+
   function setStatus(kind, text){
     const dot=document.getElementById("statusdot"), t=document.getElementById("statustext");
     if(!dot) return;
@@ -386,7 +418,7 @@
     }
   }
   function commit(){ save_local_noop(); render(); push(false); }
-  function save_local_noop(){}
+  function save_local_noop(){} // state now lives server-side; kept for symmetry with earlier logic
 
   // ---------- map ----------
   const svg = document.getElementById("map");
@@ -455,7 +487,7 @@
   }
   function pickRoute(id){
     if (winPath()) return;
-    if (S.claimed[id]){ flash(`${PLAYERS[S.claimed[id].by].name} already laid cars on this route.`); return; }
+    if (S.claimed[id]){ flash(`${label(S.claimed[id].by)} already laid cars on this route.`); return; }
     const r = RB[id];
     S.draw = {route:id, qs:pickQs(r.t), for:other(S.turn)};
     rating=false; commit();
@@ -506,12 +538,14 @@
   // ---------- render ----------
   const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   function render(){
+    document.getElementById("idpick").hidden = !!ME;
+    document.getElementById("whoamiBtn").textContent = ME ? `Playing as ${PLAYERS[ME].name} · switch` : "";
     const path = winPath();
     document.getElementById("players").innerHTML = ["M","S"].map(p=>{
       const n=ROUTES.filter(r=>S.claimed[r.id] && S.claimed[r.id].by===p).length;
       return `<div class="player ${!path && S.turn===p?"active":""}" style="--pc:${PLAYERS[p].color}">
         <div class="token">${PLAYERS[p].name[0]}</div>
-        <div><div class="pname">${PLAYERS[p].name}${!path && S.turn===p?" · drawing":""}</div>
+        <div><div class="pname">${label(p)}${!path && S.turn===p?" · drawing":""}</div>
         <div class="pmeta">${cars(p)} cars · ${n} route${n===1?"":"s"}</div></div></div>`;
     }).join("");
 
@@ -542,7 +576,7 @@
       P.className="panel win";
       P.innerHTML = `<div class="eyebrow">Arrived · Warszawa Centralna</div>
         <h2>The line is complete</h2>
-        <p class="sub" style="color:var(--ink)">Misha laid <b>${m}</b> cars and Syrine laid <b>${s}</b>. ${winner ? `<b>${PLAYERS[winner].name}</b> picks the first date spot.` : `It's a tie, so you plan the first date together.`}</p>
+        <p class="sub" style="color:var(--ink)">${label("M")} laid <b>${m}</b> cars and ${label("S")} laid <b>${s}</b>. ${winner ? `<b>${label(winner)}</b> picks the first date spot.` : `It's a tie, so you plan the first date together.`}</p>
         <p class="sub">The map has done its job. Next step is a real ticket.</p>
         <div class="actions"><button type="button" class="ghost" id="again">Play another round</button></div>`;
       document.getElementById("again").onclick = ()=>{ S=fresh(); rating=false; commit(); };
@@ -552,11 +586,11 @@
     const drawer=S.turn, target=other(S.turn);
     if (!S.draw){
       const cols = Object.values(THEMES).map(t=>`<span style="--c:${t.c}"></span>`).join("");
-      P.innerHTML = `<div class="eyebrow">Turn ${claimedN+1} · ${PLAYERS[drawer].name} is drawing</div>
-        <h2>Draw a card for ${PLAYERS[target].name}</h2>
+      P.innerHTML = `<div class="eyebrow">Turn ${claimedN+1} · ${label(drawer)} ${drawer===ME?"are":"is"} drawing</div>
+        <h2>Draw a card for ${label(target)}</h2>
         <div class="empty"><div class="deck" aria-hidden="true">${cols}</div>
         <p class="sub">A random open route is picked, with two questions from its colour. Or tap a route on the map to choose it yourself.</p>
-        <button type="button" class="primary big for-${target}" id="drawBtn">Draw for ${PLAYERS[target].name}</button>
+        <button type="button" class="primary big for-${target}" id="drawBtn">Draw for ${label(target)}</button>
         <button type="button" class="link" id="swapBtn">Switch who's drawing</button>
         <p class="toast" id="toast">${esc(flashMsg)}</p></div>`;
       document.getElementById("drawBtn").onclick = drawRandom;
@@ -565,18 +599,18 @@
     }
     const d=S.draw, r=RB[d.route], th=THEMES[r.t];
     const answerActions = rating
-      ? `<p class="sub"><b style="color:var(--ink)">${PLAYERS[other(d.for)].name}</b>, how good was that answer? Be honest — it decides the cars.</p>
+      ? `<p class="sub"><b style="color:var(--ink)">${label(other(d.for))}</b>, how good was that answer? Be honest — it decides the cars.</p>
          <div class="actions">${RATINGS.map((rt,i)=>`<button type="button" class="rate" data-i="${i}">${rt.emoji} ${esc(rt.label)}<br><small>${rt.delta>0?'+':''}${rt.delta} cars</small></button>`).join("")}</div>
          <div class="actions"><button type="button" class="link" id="backBtn">Back</button></div>`
-      : `<p class="sub">Did ${PLAYERS[d.for].name} answer just one, or go for both?</p>
+      : `<p class="sub">Did ${label(d.for)} answer just one, or go for both?</p>
          <div class="actions">
            <button type="button" id="safeBtn">Just one — claim it safely <small>(${r.cars} cars)</small></button>
            <button type="button" class="primary" id="boldBtn">Went for both — rate it</button>
          </div>`;
-    P.innerHTML = `<div class="eyebrow">Card for ${PLAYERS[d.for].name} · drawn by ${PLAYERS[other(d.for)].name}</div>
+    P.innerHTML = `<div class="eyebrow">Card for ${label(d.for)} · drawn by ${label(other(d.for))}</div>
       <div class="route-head"><h2>${esc(CITIES[r.a].n)} → ${esc(CITIES[r.b].n)}</h2>
         <span class="chip" style="--c:${th.c}"><i></i>${th.name} · ${r.cars} cars base</span></div>
-      <p class="sub">${PLAYERS[d.for].name} answers one of these, or both to go for more cars.</p>
+      <p class="sub">${label(d.for)} ${d.for===ME?"answer":"answers"} one of these, or both to go for more cars.</p>
       <div class="tickets">${d.qs.map((qi,n)=>`
         <div class="ticket" style="--c:${th.c}"><div class="stub"><span>${th.short}</span></div>
           <div class="tbody"><div class="tmeta">Ticket ${n+1} of 2 · ${CITIES[r.a].n.slice(0,3).toUpperCase()}–${CITIES[r.b].n.slice(0,3).toUpperCase()}</div>
@@ -610,12 +644,14 @@
     document.getElementById("cancelBtn").onclick = ()=>{ S.draw=null; rating=false; commit(); };
   }
 
+  // reset with confirm
   const resetBtn=document.getElementById("reset"); let armed=false;
   resetBtn.onclick=()=>{
     if(!armed){ armed=true; resetBtn.textContent="Tap again to clear this game"; setTimeout(()=>{armed=false; resetBtn.textContent="Start a new game";},3000); return; }
     armed=false; resetBtn.textContent="Start a new game"; S=fresh(); rating=false; commit();
   };
 
+  // invite link
   document.getElementById("inviteUrl").value = location.href;
   document.getElementById("inviteCopy").onclick = ()=>{
     const box=document.getElementById("inviteUrl");
