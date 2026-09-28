@@ -329,7 +329,7 @@
     </div>
     <p class="hint" id="inviteHint">Send this link once — every move shows up on both phones within seconds.</p>
     <div class="inviterow"><input readonly id="inviteUrl" onclick="this.select()"><button type="button" id="inviteCopy">Copy link</button></div>
-    <div class="footlinks"><button type="button" class="link" id="whoamiBtn"></button><button class="link" id="reset" type="button">Start a new game</button></div>
+    <div class="footlinks"><button type="button" class="link" id="whoamiBtn"></button><button type="button" class="link" id="modeBtn"></button><button class="link" id="reset" type="button">Start a new game</button></div>
   </footer>
 </div>
 
@@ -1919,6 +1919,7 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
       <button type="button" class="primary" style="background:var(--p2);border-color:var(--p2)" data-me="S">I'm ${esc(PLAYERS.S.name)}</button>`;
     document.querySelectorAll("#idbtns [data-me]").forEach(b=>{ b.onclick=()=>setMe(b.dataset.me); });
 
+    document.getElementById("modeBtn").textContent = S.mode==="reveal" ? "Mode: write & reveal · switch to chat" : "Mode: answer in chat · switch to write & reveal";
     document.getElementById("rulesReveal").hidden = S.mode !== "reveal";
     document.getElementById("rulesClassic").hidden = S.mode === "reveal";
     document.getElementById("idpick").hidden = !!ME;
@@ -2146,7 +2147,7 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
   }
   function renderHistory(){
     const box = document.getElementById("historyBox");
-    const show = !!S.setup && S.mode==="reveal" && S.log.length>0;
+    const show = !!S.setup && S.log.length>0;
     box.hidden = !show; if (!show) return;
     document.getElementById("historyList").innerHTML = S.log.slice().reverse().map(e=>{
       const r=RB[e.route]; if(!r) return "";
@@ -2162,6 +2163,14 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
   wipeBtn.onclick = ()=>{
     if(!wipeArmed){ wipeArmed=true; wipeBtn.textContent="Tap again to delete for both of you"; setTimeout(()=>{wipeArmed=false; wipeBtn.textContent="Delete saved answers";},3500); return; }
     wipeArmed=false; wipeBtn.textContent="Delete saved answers"; S.log=[]; commit();
+  };
+
+  // switch answer mode between cards
+  document.getElementById("modeBtn").onclick = ()=>{
+    if (S.draw){ flash("Finish the card in play (or put it back) before switching mode."); return; }
+    if (Object.keys(S.pend||{}).length){ flash("Rate the pending answers first, then switch."); return; }
+    if (S.mode === "reveal"){ S.mode = "classic"; commit(); flash("Back to answering in your chat."); return; }
+    ensureKey(true).then(()=>{ S.mode = "reveal"; commit(); flash("Write & reveal is on. Send the other person the new invite link (it now ends with #k=…) so their phone can read the answers."); });
   };
 
   // reset with confirm
