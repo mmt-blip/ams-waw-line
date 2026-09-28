@@ -964,11 +964,11 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
 
   // How many real cities to pick as stops. Route *count* no longer depends on
   // this (see the parallel-lane edges below), so this only needs to be as
-  // many as makes a good-looking, readable chain — capped at 9 so a very
+  // many as makes a good-looking, readable chain — capped at 12 so a very
   // long haul still stays legible on a phone.
   // tagged cities occupy the stretch of the trip they fall in, so the auto
   // picks fill in around them instead of doubling up.
-  const target = Math.max(0, Math.min(9, Math.round(totalDist / 2.2)));
+  const target = Math.max(0, Math.min(12, Math.round(totalDist / 1.6)));
   const filled = new Array(target).fill(false);
   picks.forEach(p => { const b = Math.min(target-1, Math.floor(p.t*target)); if (b >= 0) filled[b] = true; });
 
@@ -991,88 +991,137 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
       }
     }
   }
+  // A short hop (Amsterdam→Rotterdam, Vienna→Budapest) has almost nothing
+  // strictly *between* the two cities, which would leave a board with one
+  // or two routes. Top it up with the closest other cities around the trip
+  // — a regional detour map — so every board has a real web to play on.
+  const MIN_STOPS = 6;
+  if (picks.length < MIN_STOPS){
+    const midLon = sLon + dx0/2, midLat = start.lat + dy0/2;
+    const sep = Math.max(minSepDeg, totalDist*0.12, 0.12);
+    const extra = db.filter(c => c!==start && c!==end && !picks.some(p=>p.c===c) &&
+        cityKey(c.n)!==cityKey(start.n) && cityKey(c.n)!==cityKey(end.n))
+      .map(c => { const l = unwrap(c.lon); return {c, d: Math.hypot(l-midLon, c.lat-midLat) * (BIGFUN.has(c.n) ? 0.7 : 1)}; })
+      .sort((p,q)=>p.d-q.d);
+    for (const e of extra){
+      if (picks.length >= MIN_STOPS) break;
+      const l = unwrap(e.c.lon);
+      if (Math.hypot(l-sLon, e.c.lat-start.lat) < sep || Math.hypot(l-eLon, e.c.lat-end.lat) < sep) continue;
+      if (picks.some(p => Math.hypot(unwrap(p.c.lon)-l, p.c.lat-e.c.lat) < sep)) continue;
+      const cx = l - sLon, cy = e.c.lat - start.lat;
+      const t = (cx*dx0 + cy*dy0) / (totalDist*totalDist);
+      picks.push({c:e.c, t: Math.max(0.05, Math.min(0.95, t)), perp:0, big:BIGFUN.has(e.c.n), score:0});
+    }
+  }
   picks.sort((p,q)=>p.t-q.t);
 
-  // ---------- assemble nodes ----------
-  const nodes = [start, ...picks.map(p=>p.c), end];
+  // ---------- assemble nodes: a scattered mesh, not a neat grid. Cities are
+  // placed roughly where the corridor scan already put them (progress along
+  // the trip × how far off the direct line), then jittered — so the board
+  // looks organic, like real cities really do, not laid out on rails. ----------
   const used = new Set(); const ids = [];
-  nodes.forEach(n=>{
+  function assignId(n){
     let base = cityKey(n.n).replace(/[^a-z]/g,"").slice(0,3).toUpperCase() || "CTY";
     let id = base, k=1;
     while (used.has(id)) id = base + (++k);
     used.add(id); ids.push(id);
-  });
-  const startId = ids[0], endId = ids[ids.length-1];
+    return id;
+  }
+  const startId = assignId(start);
+  const midIds = picks.map(p => assignId(p.c));
+  const endId = assignId(end);
+  const orderedIds = [startId, ...midIds, endId];
 
   const CITIES = {};
-  nodes.forEach((n,i)=>{ CITIES[ids[i]] = {n:n.n.replace(/\s*\([^)]*\)\s*$/,""), lon: i>0 && i<nodes.length ? unwrap(n.lon) : n.lon, lat:n.lat, end: i===0 || i===ids.length-1}; });
-  // re-unwrap start/end too, for a consistent coordinate space
+  const addCity = n => ({n:n.n.replace(/\s*\([^)]*\)\s*$/,""), lon: unwrap(n.lon), lat:n.lat});
+  CITIES[startId] = {...addCity(start), end:true};
+  picks.forEach((p,i)=>{ CITIES[midIds[i]] = addCity(p.c); });
+  CITIES[endId] = {...addCity(end), end:true};
   CITIES[startId].lon = sLon; CITIES[endId].lon = eLon;
 
-  // ---------- lay out the board as a single serpentine line, not a real map
-  // or a mesh graph. Every node connects only to its immediate chain
-  // neighbour, so there is never a crossing line, never a hub, and never an
-  // empty region — the wave always uses the exact same footprint. Multiple
-  // parallel "lanes" (like the double-track routes on a real Ticket to Ride
-  // board) between adjacent stops supply the route count instead of
-  // long-distance shortcuts. ----------
+  // ---------- lay out: real map orientation. North is up, east is right,
+  // exactly like an atlas — Amsterdam→São Paulo runs from the top right to the
+  // bottom left, London→Rome heads south-east, and so on — so the board also
+  // tells you which way you're really travelling. Positions come from actual
+  // longitude/latitude (longitude scaled by cos(latitude) so a degree east
+  // isn't drawn wider than a degree north), then two gentle adjustments make
+  // it playable without changing any "who is north/east of whom": a partial
+  // rank-spread (real cities bunch around hubs and leave big gaps elsewhere),
+  // and the relaxation pass below that pushes apart anything that overlaps. ----------
   const VB_W=1060, VB_H=620;
-  const PAD_X = 170, PAD_Y = 95;
-  const n = ids.length;
-  const usableW = VB_W - 2*PAD_X, amp = (VB_H - 2*PAD_Y) / 2;
-  ids.forEach((id,i)=>{
+  const PAD_X = 90, PAD_Y = 64;
+  const usableW = VB_W - 2*PAD_X, usableH = VB_H - 2*PAD_Y;
+  const latMid = orderedIds.reduce((s,id)=>s+CITIES[id].lat,0)/orderedIds.length;
+  const kx = Math.max(0.3, Math.cos(latMid*Math.PI/180));
+  const gx = {}, gy = {};
+  orderedIds.forEach(id=>{ gx[id] = CITIES[id].lon*kx; gy[id] = -CITIES[id].lat; }); // screen y grows downward
+  const norm = vals => { const lo=Math.min(...vals), hi=Math.max(...vals), sp=Math.max(1e-6,hi-lo); return {lo, sp}; };
+  const nx = norm(orderedIds.map(id=>gx[id])), ny = norm(orderedIds.map(id=>gy[id]));
+  const rankOf = key => { // 0..1 by order along one axis; ties keep a stable order
+    const sorted = [...orderedIds].sort((p,q)=>key[p]-key[q] || orderedIds.indexOf(p)-orderedIds.indexOf(q));
+    const r = {}; sorted.forEach((id,i)=>r[id] = orderedIds.length>1 ? i/(orderedIds.length-1) : .5); return r;
+  };
+  const rx = rankOf(gx), ry = rankOf(gy);
+  const SPREAD = 0.55;
+  const ux = {}, uy = {};
+  orderedIds.forEach(id=>{
+    ux[id] = (1-SPREAD)*((gx[id]-nx.lo)/nx.sp) + SPREAD*rx[id];
+    uy[id] = (1-SPREAD)*((gy[id]-ny.lo)/ny.sp) + SPREAD*ry[id];
+  });
+  // Fill the board, but never stretch one axis by more than MAX_SKEW times
+  // the other — a due-north trip should look tall, not be smeared wide.
+  const MAX_SKEW = 4;
+  let W = usableW, H = usableH;
+  const natural = nx.sp / ny.sp;                 // real width : height of the trip
+  const skew = (W/H) / natural;                  // how much filling the board stretches x relative to y
+  if (skew > MAX_SKEW) W = H * natural * MAX_SKEW;
+  else if (skew < 1/MAX_SKEW) H = W / (natural / MAX_SKEW);
+  W = Math.min(W, usableW); H = Math.min(H, usableH);
+  const offX = PAD_X + (usableW-W)/2, offY = PAD_Y + (usableH-H)/2;
+  orderedIds.forEach(id=>{
     const c = CITIES[id];
-    c.x = n > 1 ? PAD_X + i * usableW/(n-1) : VB_W/2;
-    // a smooth envelope (0 at both ends, full swing in the middle) times an
-    // alternating up/down sign — a single continuous river-like curve.
-    const env = n > 2 ? Math.sin(Math.PI * i/(n-1)) : 0;
-    c.y = VB_H/2 + amp * env * (i % 2 ? 1 : -1);
+    c.x = offX + ux[id]*W;
+    c.y = offY + uy[id]*H;
+  });
+  // a little organic wobble so a coastline or motorway of cities never lines
+  // up dead straight (a straight row leaves no room for cross-connections).
+  midIds.forEach(id=>{
+    const c = CITIES[id];
+    c.x += (rng()-0.5) * 0.05 * usableW;
+    c.y += (rng()-0.5) * 0.09 * usableH;
   });
 
-  // ---------- parallel lanes per segment, tuned so the whole board totals
-  // close to 20 routes without ever exceeding 3 lanes on one segment (any
-  // more reads as clutter) or dropping below 1. ----------
-  const segments = Math.max(0, n - 1);
-  const TARGET_ROUTES = 20;
-  const lanesPerSeg = new Array(segments).fill(2);
-  const order = [...Array(segments).keys()];
-  for (let i=order.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
-  let totalLanes = segments * 2;
-  if (totalLanes < TARGET_ROUTES){
-    let need = Math.min(TARGET_ROUTES - totalLanes, segments);
-    for (let k=0;k<need;k++) lanesPerSeg[order[k]] = 3;
-  } else if (totalLanes > TARGET_ROUTES){
-    let excess = Math.min(totalLanes - TARGET_ROUTES, segments);
-    for (let k=0;k<excess;k++) lanesPerSeg[order[k]] = 1;
+  // relaxation: any two cities closer than MIN_SEP get pushed apart along
+  // the line between them (start/end stay put). Many small passes keep
+  // relative positions — it spreads a cluster out, it doesn't reshuffle it.
+  const MIN_SEP = Math.min(124, Math.max(78, 0.6 * Math.sqrt(W*H/orderedIds.length)));
+  for (let pass=0; pass<120; pass++){
+    let moved = false;
+    for (let i=0;i<orderedIds.length;i++) for (let j=i+1;j<orderedIds.length;j++){
+      const a = CITIES[orderedIds[i]], b = CITIES[orderedIds[j]];
+      let dx = b.x-a.x, dy = b.y-a.y, d = Math.hypot(dx,dy);
+      if (d >= MIN_SEP) continue;
+      if (d < 0.01){ dx = rng()-0.5; dy = rng()-0.5; d = Math.hypot(dx,dy); }
+      const push = (MIN_SEP - d)/2, ux = dx/d, uy = dy/d;
+      const aPinned = a.end, bPinned = b.end;
+      const fa = aPinned ? 0 : (bPinned ? 2 : 1), fb = bPinned ? 0 : (aPinned ? 2 : 1);
+      a.x -= ux*push*fa; a.y -= uy*push*fa;
+      b.x += ux*push*fb; b.y += uy*push*fb;
+      moved = true;
+    }
+    orderedIds.forEach(id=>{
+      const c = CITIES[id]; if (c.end) return;
+      c.x = Math.max(PAD_X+30, Math.min(PAD_X+usableW-30, c.x));
+      c.y = Math.max(PAD_Y, Math.min(VB_H-PAD_Y, c.y));
+    });
+    if (!moved) break;
   }
 
-  // ---------- label anchors: every stop — endpoints included — sits on the
-  // outside of its own little bulge (below a dip, above a peak) so a label
-  // never collides with the curve or, for a long city name, the endpoint's
-  // ring marker (endpoints always start at the vertical center, so a
-  // sideways label would butt straight into the ring instead). ----------
-  ids.forEach((id,i)=>{
-    const c = CITIES[id];
-    const below = c.end ? true : c.y > VB_H/2;
-    c.a = "middle"; c.dx = 0;
-    // endpoints get extra clearance: their segment can carry up to 3 parallel
-    // lanes fanned out from the node, and the label needs to clear the
-    // widest one plus its own text ascent, not just the bare node/ring.
-    c.dy = c.end ? (below ? 44 : -36) : (below ? 24 : -18);
-    // keep every label fully inside the frame, using an estimated text width
-    const w = c.n.length * (c.end ? 15.5 : 8.4);
-    const left = c.x + c.dx - w/2, right = left + w;
-    if (left < 10) c.dx += 10 - left;
-    else if (right > VB_W - 10) c.dx -= right - (VB_W - 10);
-    if (c.y + c.dy < 20) c.dy = 22 - c.y;
-    else if (c.y + c.dy > VB_H - 8) c.dy = VB_H - 8 - c.y;
-  });
-
-  // ---------- themes + car counts ----------
-  // "depth" (light / balanced / deep) weights which card categories come up
-  // more often — every category still appears at least once, just more or
-  // less frequently, so the couple gets a board that matches how deep they
-  // said they want to go without losing any variety entirely.
+  // ---------- edges: for every stop (in trip order), connect it to a
+  // handful of its nearest earlier stops — never only the single closest
+  // one. That's what makes it a real web instead of a path: several
+  // independent ways to get from any one city to the next, criss-crossing
+  // like the hand-built board this app started from. ----------
   const DEPTH_WEIGHTS = {
     light:    {1:4, 2:2, 3:1, 4:1},
     balanced: {1:1, 2:1, 3:1, 4:1},
@@ -1084,19 +1133,196 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
   for (let i=shuffledThemes.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [shuffledThemes[i],shuffledThemes[j]]=[shuffledThemes[j],shuffledThemes[i]]; }
 
   const ROUTES = [];
-  for (let s=0; s<segments; s++){
-    const A = CITIES[ids[s]], B = CITIES[ids[s+1]];
-    const d = Math.hypot(B.x-A.x, B.y-A.y);
-    const lanes = lanesPerSeg[s];
-    for (let lane=0; lane<lanes; lane++){
-      const t = shuffledThemes[ROUTES.length % shuffledThemes.length];
-      ROUTES.push({
-        id:"r"+ROUTES.length, a:ids[s], b:ids[s+1], t, len:d,
-        cars:Math.max(2,Math.min(4,Math.round(d/70))),
-        lane, lanes // which parallel track this is, and how many share the segment — the renderer offsets them apart
-      });
-    }
+  const seenEdges = new Set();
+  const degree = {}; orderedIds.forEach(id=>degree[id]=0);
+  function addEdge(a, b){
+    if (!a || !b || a===b) return false;
+    const key = a<b ? a+"|"+b : b+"|"+a;
+    if (seenEdges.has(key)) return false;
+    seenEdges.add(key);
+    const A=CITIES[a], B=CITIES[b], d=Math.hypot(B.x-A.x,B.y-A.y);
+    const t = shuffledThemes[ROUTES.length % shuffledThemes.length];
+    ROUTES.push({id:"r"+ROUTES.length, a, b, t, len:d, cars:Math.max(2,Math.min(4,Math.round(d/70)))});
+    degree[a]++; degree[b]++;
+    return true;
   }
+  // an edge may not run through (or graze) a third city's dot — on a real
+  // board a line always stops AT a city, never passes over one.
+  const segDist = (px,py, ax,ay, bx,by) => {
+    const vx=bx-ax, vy=by-ay, L2=vx*vx+vy*vy || 1;
+    const u = Math.max(0, Math.min(1, ((px-ax)*vx + (py-ay)*vy)/L2));
+    return Math.hypot(px-(ax+u*vx), py-(ay+u*vy));
+  };
+  // …and may not lie along (on top of) an existing route. Crossing another
+  // route at an angle is fine — that's the web — but running alongside it
+  // for a stretch makes two routes impossible to tell apart.
+  const overlaps = (a,b,loose) => {
+    const A=CITIES[a], B=CITIES[b];
+    const len = Math.hypot(B.x-A.x, B.y-A.y), N = Math.max(8, Math.ceil(len/8)), step = len/N;
+    return ROUTES.some(r => {
+      const P=CITIES[r.a], Q=CITIES[r.b];
+      // two routes leaving the same city at almost the same angle sit on
+      // top of each other for their first stretch — reject.
+      const shared = r.a===a ? [P,Q] : r.b===a ? [Q,P] : r.a===b ? [P,Q,true] : r.b===b ? [Q,P,true] : null;
+      if (shared){
+        const [S,O,atB] = shared;
+        const from = atB ? B : A, to = atB ? A : B;
+        const a1 = Math.atan2(to.y-from.y, to.x-from.x), a2 = Math.atan2(O.y-S.y, O.x-S.x);
+        let diff = Math.abs(a1-a2); if (diff > Math.PI) diff = 2*Math.PI - diff;
+        // routes sharing a city naturally start right next to each other, so
+        // the only real test for them is whether they leave at nearly the
+        // same angle (i.e. would lie on top of each other).
+        return diff < (loose ? 0.26 : 0.33); // ~15° / ~19°
+      }
+      let run = 0;
+      for (let k=1;k<N;k++){
+        const px = A.x+(B.x-A.x)*k/N, py = A.y+(B.y-A.y)*k/N;
+        if (segDist(px,py,P.x,P.y,Q.x,Q.y) < 13){ run += step; if (run >= (loose ? 40 : 22)) return true; } else run = 0;
+      }
+      return false;
+    });
+  };
+  const clear = (a,b) => !overlaps(a,b) && orderedIds.every(o => o===a || o===b ||
+    segDist(CITIES[o].x, CITIES[o].y, CITIES[a].x, CITIES[a].y, CITIES[b].x, CITIES[b].y) > 22);
+  // middle tier for fallbacks: never stack on another route, but allow a
+  // line to pass a bit closer to another city's dot than normal.
+  const noStack = (a,b) => !overlaps(a,b) && orderedIds.every(o => o===a || o===b ||
+    segDist(CITIES[o].x, CITIES[o].y, CITIES[a].x, CITIES[a].y, CITIES[b].x, CITIES[b].y) > 12);
+  const loose = (a,b) => !overlaps(a,b,true) && orderedIds.every(o => o===a || o===b ||
+    segDist(CITIES[o].x, CITIES[o].y, CITIES[a].x, CITIES[a].y, CITIES[b].x, CITIES[b].y) > 12);
+  const dotClear = (a,b) => orderedIds.every(o => o===a || o===b ||
+    segDist(CITIES[o].x, CITIES[o].y, CITIES[a].x, CITIES[a].y, CITIES[b].x, CITIES[b].y) > 22);
+  const dist = (a,b) => Math.hypot(CITIES[a].x-CITIES[b].x, CITIES[a].y-CITIES[b].y);
+  const near = (id, pool) => pool.map(oid=>({oid, d:dist(id,oid)})).sort((p,q)=>p.d-q.d);
+  const MAX_DEG = 5;
+
+  // 1) the web itself: every possible pair, shortest first (with a little
+  //    randomness so it isn't mechanical), added whenever the line is clear
+  //    and neither city is already a crowded hub. Short local links first
+  //    naturally make a mesh of triangles — lots of alternative routes, lines
+  //    crossing here and there — without giant lines across the whole board.
+  const WANT = Math.min(28, Math.max(15, Math.round(orderedIds.length * 2)));
+  const pool = [];
+  for (let i=0;i<orderedIds.length;i++) for (let j=i+1;j<orderedIds.length;j++){
+    const a=orderedIds[i], b=orderedIds[j];
+    if (a===startId && b===endId) continue; // never a straight shot across the whole board
+    pool.push({a, b, score: dist(a,b) * (0.75 + rng()*0.6)});
+  }
+  pool.sort((p,q)=>p.score-q.score);
+  for (const e of pool){
+    if (ROUTES.length >= WANT) break;
+    if (degree[e.a] >= MAX_DEG || degree[e.b] >= MAX_DEG) continue;
+    if (clear(e.a,e.b)) addEdge(e.a,e.b);
+  }
+
+  // 2) one connected board: if the web came out in separate pieces, join
+  //    them with the shortest possible link (clear if at all possible).
+  const comp = () => {
+    const parent = {}; orderedIds.forEach(id=>parent[id]=id);
+    const find = x => parent[x]===x ? x : (parent[x]=find(parent[x]));
+    ROUTES.forEach(r=>{ parent[find(r.a)] = find(r.b); });
+    return find;
+  };
+  for (let guard=0; guard<20; guard++){
+    const find = comp();
+    const roots = new Set(orderedIds.map(find));
+    if (roots.size <= 1) break;
+    const home = find(startId);
+    let best = null;
+    for (const a of orderedIds) for (const b of orderedIds){
+      if (find(a)!==home || find(b)===home) continue;
+      if ((a===startId && b===endId) || (a===endId && b===startId)) continue;
+      const score = dist(a,b) * (clear(a,b) ? 1 : noStack(a,b) ? 1.4 : dotClear(a,b) ? 2.2 : 4);
+      if (!best || score < best.score) best = {a,b,score};
+    }
+    if (!best) break;
+    addEdge(best.a, best.b);
+  }
+
+  // 3) no dead ends: every stop gets at least two routes, and the two
+  //    destination cities at least three, so the end of the line is never a
+  //    single bottleneck. Prefer a fully clear line, then one that at least
+  //    doesn't run over another city's dot.
+  orderedIds.forEach(id=>{
+    const need = CITIES[id].end ? 3 : 2;
+    const cands = near(id, orderedIds.filter(o=>o!==id &&
+      !((id===startId && o===endId) || (id===endId && o===startId))));
+    const tiers = CITIES[id].end ? [clear, noStack, loose] : [clear, noStack]; // never stack a line on another one
+    for (const test of tiers){
+      for (const cand of cands){
+        if (degree[id] >= need) break;
+        if (test(id,cand.oid)) addEdge(id, cand.oid);
+      }
+    }
+    // a destination city must never be a one-route bottleneck: as a very
+    // last resort accept a line that leaves at a tighter angle to another.
+    if (CITIES[id].end){
+      for (const cand of cands){
+        if (degree[id] >= 2) break;
+        if (dotClear(id,cand.oid)) addEdge(id, cand.oid);
+      }
+    }
+  });
+
+  // 4) a stop that still couldn't get a second clean connection is a
+  //    dead-end spur — better to leave it off the board than to draw a line
+  //    stacked on top of another one. Removing it can't disconnect anything
+  //    (it hung off a single route), then route ids are renumbered.
+  for (let guard=0; guard<30; guard++){
+    const spur = midIds.find(id => degree[id] <= 1);
+    if (!spur) break;
+    for (let k=ROUTES.length-1;k>=0;k--){
+      const r = ROUTES[k];
+      if (r.a===spur || r.b===spur){ degree[r.a]--; degree[r.b]--; seenEdges.delete(r.a<r.b ? r.a+"|"+r.b : r.b+"|"+r.a); ROUTES.splice(k,1); }
+    }
+    delete CITIES[spur];
+    midIds.splice(midIds.indexOf(spur),1);
+    orderedIds.splice(orderedIds.indexOf(spur),1);
+  }
+  ROUTES.forEach((r,i)=>{ r.id = "r"+i; });
+
+  // ---------- labels: try below / above / right / left of each dot and take
+  // the first spot that doesn't collide with another label, another city's
+  // dot, or the frame edge. ----------
+  const boxes = [];
+  const hit = (b1,b2) => b1.x1 < b2.x2 && b1.x2 > b2.x1 && b1.y1 < b2.y2 && b1.y2 > b2.y1;
+  const labelOrder = [startId, endId, ...midIds];
+  labelOrder.forEach(id=>{
+    const c = CITIES[id];
+    const w = c.n.length * (c.end ? 17.5 : 9) + 6, h = c.end ? 22 : 16;
+    const preferBelow = c.end || c.y >= VB_H/2;
+    const vert = c.end ? 40 : 22, up = c.end ? -30 : -14;
+    const opts = [
+      {a:"middle", dx:0, dy: preferBelow ? vert : up},
+      {a:"middle", dx:0, dy: preferBelow ? up : vert},
+      {a:"start",  dx: c.end ? 22 : 12, dy:5},
+      {a:"end",    dx: c.end ? -22 : -12, dy:5}
+    ];
+    const boxOf = o => {
+      const x1 = o.a==="middle" ? c.x+o.dx-w/2 : o.a==="start" ? c.x+o.dx : c.x+o.dx-w;
+      return {x1, x2:x1+w, y1:c.y+o.dy-h+3, y2:c.y+o.dy+3};
+    };
+    const inFrame = b => b.x1 >= 6 && b.x2 <= VB_W-6 && b.y1 >= 4 && b.y2 <= VB_H-4;
+    const dotHit = b => orderedIds.some(o => o!==id && CITIES[o].x > b.x1-8 && CITIES[o].x < b.x2+8 && CITIES[o].y > b.y1-8 && CITIES[o].y < b.y2+8);
+    const lineHit = b => ROUTES.some(r => {
+      const P=CITIES[r.a], Q=CITIES[r.b];
+      for (let k=1;k<12;k++){
+        const x = P.x+(Q.x-P.x)*k/12, y = P.y+(Q.y-P.y)*k/12;
+        if (x > b.x1-2 && x < b.x2+2 && y > b.y1-2 && y < b.y2+2) return true;
+      }
+      return false;
+    });
+    const ok = (o, strict) => { const b=boxOf(o); return inFrame(b) && !boxes.some(x=>hit(x,b)) && (!strict || (!dotHit(b) && !lineHit(b))); };
+    let pick = opts.find(o => ok(o,true))
+            || opts.find(o => { const b=boxOf(o); return ok(o,false) && !dotHit(b); })
+            || opts.find(o => ok(o,false))
+            || opts[0];
+    c.a = pick.a; c.dx = pick.dx; c.dy = pick.dy;
+    // last resort: slide a centered label sideways to stay inside the frame
+    let b = boxOf(pick);
+    if (b.x1 < 6){ c.dx += 6-b.x1; } else if (b.x2 > VB_W-6){ c.dx -= b.x2-(VB_W-6); }
+    boxes.push(boxOf({a:c.a, dx:c.dx, dy:c.dy}));
+  });
 
   return {ok:true, cities:CITIES, routes:ROUTES, startId, endId};
 }
@@ -1246,14 +1472,6 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
   const ENDPOINT = "/.netlify/functions/state?room=" + encodeURIComponent(ROOM);
 
   // ---------- legacy migration ----------
-  // This app used to ship as a fixed, single-couple Amsterdam⇄Warsaw board
-  // (v:2 state — no `setup` field, just laid/turn/used/draw against a
-  // hardcoded CITIES/ROUTES table). It's now a reusable, anonymized version
-  // where any room's board comes from its own `setup`. A room saved by the
-  // old version still has real, in-progress data in it, so on load we
-  // rebuild that exact original board as a `setup` object and reuse it —
-  // nothing about the game or the standings changes, it just becomes
-  // self-describing like every room created from here on.
   const LEGACY_CITIES = {
     AMS:{n:"Amsterdam", lon:4.90, lat:52.37, end:true, a:"middle", dx:0, dy:34},
     BRE:{n:"Bremen", lon:8.80, lat:53.08, a:"end", dx:-12, dy:-10},
@@ -1281,7 +1499,7 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
     ["POZ","WAW","flirty"]
   ].map(([a,b,t],i)=>{
     const A=LEGACY_CITIES[a],B=LEGACY_CITIES[b]; const d=Math.hypot(B.x-A.x,B.y-A.y);
-    return {id:"r"+i, a, b, t, len:d, cars:Math.max(2,Math.min(4,Math.round(d/70))), lane:0, lanes:1};
+    return {id:"r"+i, a, b, t, len:d, cars:Math.max(2,Math.min(4,Math.round(d/70)))};
   });
   const LEGACY_SETUP = { names:{M:"Misha", S:"Syrine"}, cities:LEGACY_CITIES, routes:LEGACY_ROUTES, startId:"AMS", endId:"WAW", depth:"balanced" };
 
@@ -1289,13 +1507,27 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
   // laid[routeId] = ["M","S",...] — who laid each car on that route, in order.
   const fresh = () => ({v:3, setup:null, laid:{}, turn:"M", used:{}, draw:null, last:""});
 
+  // a saved trip whose routes are missing their length / car count (an older
+  // or different version wrote it) would otherwise turn into NaN everywhere.
+  function fixRoutes(setup){
+    if (!setup || !setup.routes || !setup.cities) return setup;
+    let dirty = false;
+    const routes = setup.routes.map(r=>{
+      if (Number.isFinite(r.len) && r.cars > 0) return r;
+      const A=setup.cities[r.a], B=setup.cities[r.b];
+      const len = Number.isFinite(r.len) ? r.len : (A && B ? Math.hypot(B.x-A.x,B.y-A.y) : 200);
+      dirty = true;
+      return {...r, len, cars: r.cars > 0 ? r.cars : Math.max(2,Math.min(4,Math.round(len/70)))};
+    });
+    return dirty ? {...setup, routes} : setup;
+  }
+
   function normalize(st){
     if (!st || typeof st !== "object") return fresh();
     if (st.v !== 3 && st.laid){
-      // pre-anonymization save — same progress, now describing its own board.
       st = { v:3, setup: LEGACY_SETUP, laid: st.laid, turn: st.turn, used: st.used, draw: st.draw, last: st.last };
     }
-    const out = {v:3, setup: st.setup || null, laid:{}, turn: st.turn==="S" ? "S" : "M", used: st.used || {}, draw: st.draw || null, last: st.last || ""};
+    const out = {v:3, setup: fixRoutes(st.setup) || null, laid:{}, turn: st.turn==="S" ? "S" : "M", used: st.used || {}, draw: st.draw || null, last: st.last || ""};
     if (out.setup && st.laid){
       const rb = Object.fromEntries((out.setup.routes||[]).map(r=>[r.id,r]));
       for (const id in st.laid) if (rb[id]) out.laid[id] = st.laid[id].slice(0, rb[id].cars);
@@ -1423,28 +1655,29 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
     const rg = el("g",{},svg);
     ROUTES.forEach(r=>{
       const A=CITIES[r.a],B=CITIES[r.b];
+      if (!A || !B) return;
       const ang = Math.atan2(B.y-A.y,B.x-A.x), deg = ang*180/Math.PI;
-      // parallel-lane offset: when several routes share the same A→B segment
-      // (this trip's "double track" stretches), nudge each one sideways,
-      // perpendicular to the segment, like adjacent tracks on a real board.
-      // The gap is wide enough that each lane's tap target (below) doesn't
-      // overlap its neighbour's — otherwise adjacent lanes would be
-      // impossible to tell apart with a tap or click.
+      const len = Number.isFinite(r.len) ? r.len : Math.hypot(B.x-A.x,B.y-A.y);
+      const cars = r.cars > 0 ? r.cars : Math.max(2,Math.min(4,Math.round(len/70)));
+      // Boards saved by earlier versions could draw several parallel "lanes"
+      // between the same two cities (r.lanes > 1); newer boards never do and
+      // saved rooms from the newest versions don't even carry the fields, so
+      // anything missing or single-lane is just one straight line.
+      const lanes = r.lanes > 1 ? r.lanes : 1, lane = lanes > 1 ? (r.lane || 0) : 0;
       const LANE_GAP = 20;
-      const laneOff = (r.lane - (r.lanes-1)/2) * LANE_GAP;
+      const laneOff = (lane - (lanes-1)/2) * LANE_GAP;
       const px = -Math.sin(ang), py = Math.cos(ang);
-      const ox = px*laneOff, oy = py*laneOff;
-      const Ax=A.x+ox, Ay=A.y+oy, Bx=B.x+ox, By=B.y+oy;
-      const trim=16, gap=6, L=r.len-2*trim, carL=(L-gap*(r.cars-1))/r.cars;
+      const trim=16, gap=6, L=len-2*trim, carL=Math.max(6,(L-gap*(cars-1))/cars);
       const grp = el("g",{class:"route","data-id":r.id,tabindex:0,role:"button"},rg);
-      // a single-lane segment keeps the full, easy-to-hit 28px tap width;
-      // a multi-lane segment narrows its tap width to fit within the lane
-      // gap above so neighbouring lanes never fight over the same tap.
-      const hitW = r.lanes > 1 ? Math.min(28, LANE_GAP - 3) : 28;
-      el("line",{class:"hit",style:`stroke-width:${hitW}px`,x1:Ax,y1:Ay,x2:Bx,y2:By},grp);
-      for (let i=0;i<r.cars;i++){
+      const hitW = lanes > 1 ? Math.min(28, LANE_GAP - 3) : 28;
+      el("line",{class:"hit",style:`stroke-width:${hitW}px`,x1:A.x+px*laneOff,y1:A.y+py*laneOff,x2:B.x+px*laneOff,y2:B.y+py*laneOff},grp);
+      // multi-lane routes converge on the shared city at both ends (see the
+      // taper) so neighbouring segments' lanes don't cross at the joint.
+      const TAPER = Math.min(26, len/3);
+      for (let i=0;i<cars;i++){
         const d = trim + carL/2 + i*(carL+gap);
-        const cx = Ax + Math.cos(ang)*d, cy = Ay + Math.sin(ang)*d;
+        const f = lanes > 1 ? Math.min(1, d/TAPER, (len-d)/TAPER) : 1;
+        const cx = A.x + Math.cos(ang)*d + px*laneOff*f, cy = A.y + Math.sin(ang)*d + py*laneOff*f;
         el("rect",{class:"car",x:-carL/2,y:-7,width:carL,height:14,rx:3,fill:THEMES[r.t].c,"fill-opacity":.2,stroke:THEMES[r.t].c,transform:`translate(${cx.toFixed(1)} ${cy.toFixed(1)}) rotate(${deg.toFixed(2)})`},grp);
       }
       grp.addEventListener("click",()=>pickRoute(r.id));
@@ -1521,7 +1754,7 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
   function newQs(){ if(!S.draw) return; S.draw.qs = pickQs(RB[S.draw.route].t); proxy=false; commit(); }
 
   const RATINGS = [
-    {label:"Played it safe", emoji:"😐", cars:0},
+    {label:"Played it safe", emoji:"😐", cars:1},
     {label:"Good answer",    emoji:"🙂", cars:2},
     {label:"Wow.",           emoji:"🔥", cars:3}
   ];
