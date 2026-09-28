@@ -14,7 +14,7 @@
     --panel:#311020; --panel-2:#43172B; --line:#5E2B45;
     --ink:#F8EAE6; --muted:#CDA7B3; --faint:#8C6070;
     --paper:#FCF2EF; --paper-ink:#3A0F1E; --paper-muted:#946B78;
-    --misha:#B6A2FF; --syrine:#FF6FA0; --accent:#F4AFC3; --cream:#FBEEEA;
+    --p1:#B6A2FF; --p2:#FF6FA0; --accent:#F4AFC3; --cream:#FBEEEA;
     --ok:#4FCB8E; --warn:#F2A33A; --bad:#E5534B;
     --display:"Fraunces", "Georgia", serif;
     --eyebrow-font:"Cormorant Garamond", "Georgia", serif;
@@ -33,8 +33,8 @@
   header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px}
   .eyebrow{font-family:var(--eyebrow-font);font-style:italic;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
   h1{font-family:var(--display);font-weight:900;font-size:clamp(36px,8vw,60px);line-height:1;letter-spacing:0;margin:6px 0 0;text-wrap:balance}
-  h1 .arrow{color:var(--syrine);font-style:italic}
-  h1 .heart{display:inline-block;color:var(--syrine);font-size:.45em;vertical-align:middle;margin-left:10px;transform:rotate(-8deg)}
+  h1 .arrow{color:var(--p2);font-style:italic}
+  h1 .heart{display:inline-block;color:var(--p2);font-size:.45em;vertical-align:middle;margin-left:10px;transform:rotate(-8deg)}
   .lede{color:var(--muted);max-width:56ch;margin:10px 0 0;font-size:15px}
   .lede b{color:var(--ink);font-weight:600}
 
@@ -75,7 +75,7 @@
     .route.selected .car:not(.laid){fill-opacity:.9;animation:pulse 1.1s ease-in-out infinite}
   .route.win .car{filter:drop-shadow(0 0 5px rgba(255,200,220,.6))}
   @keyframes pulse{50%{fill-opacity:.35}}
-  .city-label{font-family:var(--body);font-weight:600;font-size:14px;fill:var(--ink);paint-order:stroke;stroke:var(--land);stroke-width:4px;stroke-linejoin:round}
+  .city-label{font-family:var(--body);font-weight:600;font-size:14px;fill:var(--ink);paint-order:stroke;stroke:var(--land);stroke-width:4px;stroke-linejoin:round;pointer-events:none}
   .city-label.end{font-family:var(--ui);font-weight:800;font-size:20px;letter-spacing:.04em;text-transform:uppercase}
   .geo-label{font-family:var(--mono);font-size:11px;letter-spacing:.3em;fill:var(--faint);text-transform:uppercase}
   .board-foot{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid var(--line);background:var(--panel);font-size:13px;color:var(--muted)}
@@ -105,8 +105,8 @@
   button:hover{border-color:var(--muted)}
   button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   button.primary{background:var(--cream);border-color:var(--cream);color:#2B0714}
-  button.primary.for-M{background:var(--misha);border-color:var(--misha)}
-  button.primary.for-S{background:var(--syrine);border-color:var(--syrine)}
+  button.primary.for-M{background:var(--p1);border-color:var(--p1)}
+  button.primary.for-S{background:var(--p2);border-color:var(--p2)}
   button.big{font-family:var(--ui);font-weight:800;font-size:19px;letter-spacing:.02em;text-transform:uppercase;padding:12px 18px;width:100%}
   button.ghost{background:transparent}
   button.link{background:none;border:none;padding:4px 0;color:var(--muted);font-weight:500;text-decoration:underline;text-underline-offset:3px}
@@ -122,7 +122,7 @@
   .payout b{color:var(--ink)}
   .payout span{color:var(--accent)}
   .waiting{display:flex;align-items:center;gap:10px;color:var(--ink)}
-  .pulse{width:10px;height:10px;border-radius:50%;background:var(--syrine);flex:none;animation:breathe 1.4s ease-in-out infinite}
+  .pulse{width:10px;height:10px;border-radius:50%;background:var(--p2);flex:none;animation:breathe 1.4s ease-in-out infinite}
   @keyframes breathe{50%{opacity:.25;transform:scale(.7)}}
 
   .empty{display:flex;flex-direction:column;gap:14px}
@@ -131,8 +131,8 @@
   .deck span:nth-child(odd){transform:translateY(6px) rotate(-3deg)}
   .deck span:nth-child(even){transform:rotate(3deg)}
 
-  .win{background:linear-gradient(135deg,var(--panel-2),var(--panel));border:1px solid var(--syrine)}
-  .win h2{color:var(--syrine);font-size:30px}
+  .win{background:linear-gradient(135deg,var(--panel-2),var(--panel));border:1px solid var(--p2)}
+  .win h2{color:var(--p2);font-size:30px}
 
   .legend{display:grid;grid-template-columns:1fr;gap:2px}
   .lg{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
@@ -146,68 +146,961 @@
   ol.rules b{color:var(--ink);font-weight:600}
   .fine{font-size:12px;color:var(--faint);margin:0}
   @media (prefers-reduced-motion:reduce){.route.selected .car{animation:none}*{transition:none!important}}
+  .setupForm{display:flex;flex-direction:column;gap:12px}
+  .setupForm label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--muted);font-weight:600}
+  .setupForm input{font:15px var(--body);background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .setupForm input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .setupError{background:rgba(229,83,75,.14);border:1px solid var(--bad);color:var(--ink);font-size:13px;border-radius:8px;padding:8px 10px;margin:0}
+  .setupExtra{border:1px dashed var(--line);border-radius:8px;padding:8px 10px}
+  .setupExtra summary{cursor:pointer;font-size:12.5px;color:var(--muted);font-weight:600;list-style:none}
+  .setupExtra summary::-webkit-details-marker{display:none}
+  .setupExtra summary::before{content:"+ ";color:var(--accent)}
+  .setupExtra[open] summary::before{content:"− "}
+  .setupExtra label{margin-top:8px}
+  .setupExtra .fine{display:block;margin-top:6px;font-size:11.5px}
+
+  /* ---- brand / luxury layer ---- */
+  body{background:
+    radial-gradient(900px 480px at 85% -10%, rgba(244,175,195,.10), transparent 60%),
+    radial-gradient(700px 420px at -10% 20%, rgba(182,162,255,.08), transparent 60%),
+    var(--bg);background-attachment:fixed}
+  .brandbar{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 18px;padding-bottom:14px;border-bottom:1px solid rgba(244,175,195,.16)}
+  .wordmark{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.22em;text-transform:uppercase;color:var(--cream)}
+  .wordmark .heart{color:var(--p2);margin-left:6px;font-size:.8em}
+  .tagline{font-family:var(--eyebrow-font);font-style:italic;font-size:clamp(17px,2.6vw,21px);color:var(--accent);letter-spacing:.01em}
+  .tripmeta{margin:10px 0 0;font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  .tripmeta:empty{display:none}
+  .tripmeta b{color:var(--accent);font-weight:500}
+  .board{box-shadow:0 30px 60px -30px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.04)}
+  .panel{box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+
+  footer.invite{margin-top:14px;padding:18px;border-radius:16px;background:linear-gradient(180deg,rgba(67,23,43,.55),rgba(49,16,32,.35));border:1px solid rgba(244,175,195,.14);gap:10px}
+  .invitehead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 12px}
+  .invitehead .eyebrow{font-size:13px}
+  footer.invite .inviterow input{background:rgba(26,4,12,.6)}
+  .footlinks{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+  .footlinks button.link{font-size:12.5px;color:var(--faint)}
+  .footlinks button.link:hover{color:var(--muted)}
+
+  .setuphead{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+  .setuphead h2{font-family:var(--display)!important;font-weight:600!important;font-size:26px!important;line-height:1.15}
+  .setuphead p{font-size:13.5px}
+  .pair{border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;background:rgba(26,4,12,.35)}
+  .pair legend{padding:0 6px;font-family:var(--eyebrow-font);font-style:italic;font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+  .pair.p1{border-color:rgba(182,162,255,.35)} .pair.p1 legend{color:var(--p1)}
+  .pair.p2{border-color:rgba(255,111,160,.35)} .pair.p2 legend{color:var(--p2)}
+  .pairlink{text-align:center;color:var(--accent);margin:-8px 0;font-size:14px;opacity:.8}
+  .pair{min-width:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .pair label{min-width:0}
+  .pair input{width:100%;min-width:0}
+  @media (max-width:340px){.pair{grid-template-columns:minmax(0,1fr)}}
+  .depthpick{border:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+  .depthpick legend{padding:0;font-size:12.5px;color:var(--muted);font-weight:600}
+  .depthopts{display:flex;gap:6px;background:rgba(26,4,12,.4);border:1px solid var(--line);border-radius:10px;padding:4px}
+  .depthopt{flex:1;position:relative;display:flex;align-items:center;justify-content:center;text-align:center;padding:9px 4px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;line-height:1.25}
+  .depthopt input{position:absolute;opacity:0;pointer-events:none}
+  .depthopt input:checked ~ span{color:#2B0714}
+  .depthopt:has(input:checked){background:var(--cream)}
+  .depthopt input:focus-visible ~ span{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  /* the 1060-wide map is scaled to ~1/3 on a phone — enlarge labels so they stay legible */
+  @media (max-width:600px){
+    .city-label{font-size:20px;stroke-width:5px}
+    .city-label.end{font-size:22px}
+  }
 </style>
 </head>
 <body>
 
 <div class="wrap">
+  <div class="brandbar">
+    <span class="wordmark">Drawn Closer<span class="heart">♥</span></span>
+    <span class="tagline">Closing the distance, one question at a time.</span>
+  </div>
+
   <header>
     <div>
-      <div class="eyebrow">Destination ticket · AMS → WAW · 2 players</div>
-      <h1>Amsterdam <span class="arrow">⇄</span> Warsaw<span class="heart">♥</span></h1>
-      <p class="lede">Take turns drawing a card for each other. Every card has <b>two questions</b>. Answer one and you lay a car, safely. Answer both and the other person rates it — could be three cars, could be none. Connect the two cities, and <b>whoever laid the most cars picks the first date spot.</b></p>
+      <div class="eyebrow" id="eyebrowTop">A game for two</div>
+      <h1 id="heroTitle">Two cities, one line</h1>
+      <p class="tripmeta" id="tripMeta"></p>
+      <p class="lede">Whoever lays the most cars picks the first date.</p>
     </div>
     <div class="players" id="players"></div>
   </header>
 
-  <div class="invite">
-    <p class="hint" id="inviteHint">Send this link once. After that, whatever either of you does shows up on both phones within a few seconds — no codes to paste.</p>
-    <div class="inviterow"><input readonly id="inviteUrl" onclick="this.select()"><button type="button" id="inviteCopy">Copy link</button></div>
-    <p class="statusline" id="statusline"><span class="dot" id="statusdot"></span><span id="statustext">Connecting…</span><button type="button" class="whoami" id="whoamiBtn"></button></p>
+  <div class="idpick" id="setupScreen" hidden>
+    <div class="idcard" style="text-align:left;max-width:400px">
+      <div class="setuphead">
+        <span class="wordmark">Drawn Closer<span class="heart">♥</span></span>
+        <h2>Where does your line begin?</h2>
+        <p>Two names, two cities. We'll draw the route between you — it syncs to both phones.</p>
+      </div>
+      <form id="setupForm" class="setupForm">
+        <fieldset class="pair p1"><legend>You</legend>
+          <label>Name<input type="text" id="setupName1" maxlength="24" required placeholder="Alex" autocomplete="off"></label>
+          <label>City<input type="text" id="setupCity1" maxlength="60" required placeholder="Amsterdam" autocomplete="off"></label>
+        </fieldset>
+        <div class="pairlink" aria-hidden="true">⇅</div>
+        <fieldset class="pair p2"><legend>Them</legend>
+          <label>Name<input type="text" id="setupName2" maxlength="24" required placeholder="Sam" autocomplete="off"></label>
+          <label>City<input type="text" id="setupCity2" maxlength="60" required placeholder="Lisbon" autocomplete="off"></label>
+        </fieldset>
+        <fieldset class="depthpick">
+          <legend>How deep do you want to go?</legend>
+          <div class="depthopts" id="depthOpts" role="radiogroup" aria-label="How deep do you want to go?">
+            <label class="depthopt"><input type="radio" name="depth" value="light" autocomplete="off"><span>Light &amp; playful</span></label>
+            <label class="depthopt"><input type="radio" name="depth" value="balanced" checked autocomplete="off"><span>Balanced</span></label>
+            <label class="depthopt"><input type="radio" name="depth" value="deep" autocomplete="off"><span>Deep &amp; vulnerable</span></label>
+          </div>
+        </fieldset>
+        <details class="setupExtra">
+          <summary>Add stops along the way</summary>
+          <label>Cities you'd love on the map<input type="text" id="setupExtraCities" maxlength="200" placeholder="e.g. Paris, Venice" autocomplete="off"></label>
+          <small class="fine">Works best with places roughly between your two cities.</small>
+        </details>
+        <p class="setupError" id="setupError" hidden></p>
+        <button type="submit" class="primary big" id="setupSubmit">Draw our line</button>
+      </form>
+    </div>
   </div>
 
   <div class="idpick" id="idpick" hidden>
     <div class="idcard">
       <h2>Who's playing?</h2>
       <p>This is just for this phone, so the game can call you "you" instead of your own name.</p>
-      <div class="idbtns">
-        <button type="button" class="primary for-M" data-me="M">I'm Misha</button>
-        <button type="button" class="primary" style="background:var(--syrine);border-color:var(--syrine)" data-me="S">I'm Syrine</button>
+      <div class="idbtns" id="idbtns"></div>
+    </div>
+  </div>
+
+  <div id="gameArea" hidden>
+    <section class="board" aria-label="Route map">
+      <div class="map-scroll"><svg id="map" viewBox="0 0 1060 620" role="img" aria-label="Map of the route between the two cities"></svg></div>
+      <div class="board-foot">
+        <span class="progress" id="progress"></span>
+        <span>Tap any open route to draw from it</span>
       </div>
+    </section>
+
+    <div class="play">
+      <section class="panel" id="panel" aria-live="polite"></section>
+      <aside class="panel">
+        <h2>Route colours</h2>
+        <div class="legend" id="legend"></div>
+      </aside>
     </div>
+
+    <section class="panel">
+      <h2>How to play</h2>
+      <ol class="rules">
+        <li><b>Draw for the other person.</b> On your turn, tap the big button for a random route, or pick one on the map.</li>
+        <li><b>Send the card.</b> Copy the two questions into your chat. They answer one, or both if they're feeling brave.</li>
+        <li><b>They tap what they did.</b> One answer lays <b>1 car</b>, safe. Both answers go to you for a rating: 😐 0 cars, 🙂 2, 🔥 3.</li>
+        <li><b>Finish the line.</b> A route counts once all its cars are laid. When complete routes connect the two cities, whoever laid the most cars picks the first date.</li>
+      </ol>
+    </section>
   </div>
 
-  <section class="board" aria-label="Route map">
-    <div class="map-scroll"><svg id="map" viewBox="0 0 1060 620" role="img" aria-label="Map of routes between Amsterdam and Warsaw"></svg></div>
-    <div class="board-foot">
-      <span class="progress" id="progress"></span>
-      <span>Tap any open route to draw from it</span>
+  <footer class="invite">
+    <div class="invitehead">
+      <span class="eyebrow">Your shared board</span>
+      <p class="statusline" id="statusline"><span class="dot" id="statusdot"></span><span id="statustext">Connecting…</span></p>
     </div>
-  </section>
-
-  <div class="play">
-    <section class="panel" id="panel" aria-live="polite"></section>
-    <aside class="panel">
-      <h2>Route colours</h2>
-      <div class="legend" id="legend"></div>
-    </aside>
-  </div>
-
-  <section class="panel">
-    <h2>How to play</h2>
-    <ol class="rules">
-      <li><b>Draw for the other person.</b> On your turn, tap the big button for a random route, or pick one on the map.</li>
-      <li><b>Send the card.</b> Copy the two questions into your chat. They answer one, or both if they're feeling brave.</li>
-      <li><b>They tap what they did.</b> One answer lays <b>1 car</b>, safe. Both answers go to you for a rating: 😐 0 cars, 🙂 2, 🔥 3.</li>
-      <li><b>Finish the line.</b> A route counts once all its cars are laid. When complete routes connect Amsterdam to Warsaw, whoever laid the most cars picks the first date.</li>
-    </ol>
-    <p class="fine">Both phones share this board live. <button class="link" id="reset" type="button">Start a new game</button></p>
-  </section>
+    <p class="hint" id="inviteHint">Send this link once — every move shows up on both phones within seconds.</p>
+    <div class="inviterow"><input readonly id="inviteUrl" onclick="this.select()"><button type="button" id="inviteCopy">Copy link</button></div>
+    <div class="footlinks"><button type="button" class="link" id="whoamiBtn"></button><button class="link" id="reset" type="button">Start a new game</button></div>
+  </footer>
 </div>
 
 <script>
 (function(){
-  const PLAYERS = { M:{name:"Misha", color:"var(--misha)"}, S:{name:"Syrine", color:"var(--syrine)"} };
+  // ---------- world city data + procedural route generator (see routegen.js) ----------
+const CITY_DB = [
+{n:"London (UK)",lon:-0.13,lat:51.51,c:"United Kingdom"},
+{n:"Manchester",lon:-2.24,lat:53.48,c:"United Kingdom"},
+{n:"Birmingham (UK)",lon:-1.9,lat:52.48,c:"United Kingdom"},
+{n:"Glasgow",lon:-4.25,lat:55.86,c:"United Kingdom"},
+{n:"Edinburgh",lon:-3.19,lat:55.95,c:"United Kingdom"},
+{n:"Liverpool",lon:-2.98,lat:53.41,c:"United Kingdom"},
+{n:"Leeds",lon:-1.55,lat:53.8,c:"United Kingdom"},
+{n:"Bristol",lon:-2.59,lat:51.45,c:"United Kingdom"},
+{n:"Sheffield",lon:-1.47,lat:53.38,c:"United Kingdom"},
+{n:"Newcastle",lon:-1.61,lat:54.98,c:"United Kingdom"},
+{n:"Belfast",lon:-5.93,lat:54.6,c:"United Kingdom"},
+{n:"Cardiff",lon:-3.18,lat:51.48,c:"United Kingdom"},
+{n:"Nottingham",lon:-1.15,lat:52.95,c:"United Kingdom"},
+{n:"Oxford",lon:-1.26,lat:51.75,c:"United Kingdom"},
+{n:"Cambridge (UK)",lon:0.12,lat:52.2,c:"United Kingdom"},
+{n:"Brighton",lon:-0.14,lat:50.82,c:"United Kingdom"},
+{n:"Paris",lon:2.35,lat:48.86,c:"France"},
+{n:"Marseille",lon:5.37,lat:43.3,c:"France"},
+{n:"Lyon",lon:4.83,lat:45.76,c:"France"},
+{n:"Toulouse",lon:1.44,lat:43.6,c:"France"},
+{n:"Nice",lon:7.26,lat:43.7,c:"France"},
+{n:"Nantes",lon:-1.55,lat:47.22,c:"France"},
+{n:"Strasbourg",lon:7.75,lat:48.58,c:"France"},
+{n:"Montpellier",lon:3.88,lat:43.61,c:"France"},
+{n:"Bordeaux",lon:-0.58,lat:44.84,c:"France"},
+{n:"Lille",lon:3.06,lat:50.63,c:"France"},
+{n:"Rennes",lon:-1.68,lat:48.11,c:"France"},
+{n:"Grenoble",lon:5.72,lat:45.19,c:"France"},
+{n:"Berlin",lon:13.4,lat:52.52,c:"Germany"},
+{n:"Hamburg",lon:9.99,lat:53.55,c:"Germany"},
+{n:"Munich",lon:11.58,lat:48.14,c:"Germany"},
+{n:"Cologne",lon:6.96,lat:50.94,c:"Germany"},
+{n:"Frankfurt",lon:8.68,lat:50.11,c:"Germany"},
+{n:"Stuttgart",lon:9.18,lat:48.78,c:"Germany"},
+{n:"Dusseldorf",lon:6.78,lat:51.23,c:"Germany"},
+{n:"Dortmund",lon:7.47,lat:51.51,c:"Germany"},
+{n:"Essen",lon:7.02,lat:51.46,c:"Germany"},
+{n:"Leipzig",lon:12.37,lat:51.34,c:"Germany"},
+{n:"Bremen",lon:8.81,lat:53.08,c:"Germany"},
+{n:"Dresden",lon:13.74,lat:51.05,c:"Germany"},
+{n:"Hannover",lon:9.73,lat:52.37,c:"Germany"},
+{n:"Nuremberg",lon:11.08,lat:49.45,c:"Germany"},
+{n:"Rome",lon:12.5,lat:41.9,c:"Italy"},
+{n:"Milan",lon:9.19,lat:45.46,c:"Italy"},
+{n:"Naples",lon:14.27,lat:40.85,c:"Italy"},
+{n:"Turin",lon:7.68,lat:45.07,c:"Italy"},
+{n:"Palermo",lon:13.36,lat:38.12,c:"Italy"},
+{n:"Genoa",lon:8.93,lat:44.41,c:"Italy"},
+{n:"Bologna",lon:11.34,lat:44.49,c:"Italy"},
+{n:"Florence",lon:11.26,lat:43.77,c:"Italy"},
+{n:"Bari",lon:16.87,lat:41.12,c:"Italy"},
+{n:"Catania",lon:15.09,lat:37.5,c:"Italy"},
+{n:"Venice",lon:12.34,lat:45.44,c:"Italy"},
+{n:"Verona",lon:10.99,lat:45.44,c:"Italy"},
+{n:"Madrid",lon:-3.7,lat:40.42,c:"Spain"},
+{n:"Barcelona",lon:2.17,lat:41.39,c:"Spain"},
+{n:"Valencia",lon:-0.38,lat:39.47,c:"Spain"},
+{n:"Seville",lon:-5.99,lat:37.39,c:"Spain"},
+{n:"Zaragoza",lon:-0.88,lat:41.65,c:"Spain"},
+{n:"Malaga",lon:-4.42,lat:36.72,c:"Spain"},
+{n:"Murcia",lon:-1.13,lat:37.99,c:"Spain"},
+{n:"Bilbao",lon:-2.94,lat:43.26,c:"Spain"},
+{n:"Palma",lon:2.65,lat:39.57,c:"Spain"},
+{n:"Las Palmas",lon:-15.41,lat:28.13,c:"Spain"},
+{n:"Alicante",lon:-0.48,lat:38.35,c:"Spain"},
+{n:"Warsaw",lon:21.01,lat:52.23,c:"Poland"},
+{n:"Krakow",lon:19.94,lat:50.06,c:"Poland"},
+{n:"Lodz",lon:19.46,lat:51.76,c:"Poland"},
+{n:"Wroclaw",lon:17.03,lat:51.11,c:"Poland"},
+{n:"Poznan",lon:16.93,lat:52.41,c:"Poland"},
+{n:"Gdansk",lon:18.65,lat:54.35,c:"Poland"},
+{n:"Szczecin",lon:14.55,lat:53.43,c:"Poland"},
+{n:"Katowice",lon:19.02,lat:50.26,c:"Poland"},
+{n:"Bydgoszcz",lon:18.0,lat:53.12,c:"Poland"},
+{n:"Lublin",lon:22.57,lat:51.25,c:"Poland"},
+{n:"Amsterdam",lon:4.9,lat:52.37,c:"Netherlands"},
+{n:"Rotterdam",lon:4.48,lat:51.92,c:"Netherlands"},
+{n:"The Hague",lon:4.3,lat:52.08,c:"Netherlands"},
+{n:"Utrecht",lon:5.12,lat:52.09,c:"Netherlands"},
+{n:"Eindhoven",lon:5.47,lat:51.44,c:"Netherlands"},
+{n:"Groningen",lon:6.57,lat:53.22,c:"Netherlands"},
+{n:"Tilburg",lon:5.09,lat:51.56,c:"Netherlands"},
+{n:"Lisbon",lon:-9.14,lat:38.72,c:"Portugal"},
+{n:"Porto",lon:-8.61,lat:41.15,c:"Portugal"},
+{n:"Braga",lon:-8.43,lat:41.55,c:"Portugal"},
+{n:"Coimbra",lon:-8.43,lat:40.21,c:"Portugal"},
+{n:"Faro",lon:-7.93,lat:37.02,c:"Portugal"},
+{n:"Brussels",lon:4.35,lat:50.85,c:"Belgium"},
+{n:"Antwerp",lon:4.4,lat:51.22,c:"Belgium"},
+{n:"Ghent",lon:3.72,lat:51.05,c:"Belgium"},
+{n:"Bruges",lon:3.22,lat:51.21,c:"Belgium"},
+{n:"Liege",lon:5.57,lat:50.63,c:"Belgium"},
+{n:"Zurich",lon:8.54,lat:47.37,c:"Switzerland"},
+{n:"Geneva",lon:6.15,lat:46.2,c:"Switzerland"},
+{n:"Basel",lon:7.59,lat:47.56,c:"Switzerland"},
+{n:"Bern",lon:7.45,lat:46.95,c:"Switzerland"},
+{n:"Lausanne",lon:6.63,lat:46.52,c:"Switzerland"},
+{n:"Vienna",lon:16.37,lat:48.21,c:"Austria"},
+{n:"Graz",lon:15.44,lat:47.07,c:"Austria"},
+{n:"Linz",lon:14.29,lat:48.31,c:"Austria"},
+{n:"Salzburg",lon:13.04,lat:47.8,c:"Austria"},
+{n:"Innsbruck",lon:11.4,lat:47.27,c:"Austria"},
+{n:"Stockholm",lon:18.07,lat:59.33,c:"Sweden"},
+{n:"Gothenburg",lon:11.97,lat:57.71,c:"Sweden"},
+{n:"Malmo",lon:13.0,lat:55.6,c:"Sweden"},
+{n:"Uppsala",lon:17.64,lat:59.86,c:"Sweden"},
+{n:"Oslo",lon:10.75,lat:59.91,c:"Norway"},
+{n:"Bergen",lon:5.32,lat:60.39,c:"Norway"},
+{n:"Trondheim",lon:10.4,lat:63.43,c:"Norway"},
+{n:"Stavanger",lon:5.73,lat:58.97,c:"Norway"},
+{n:"Copenhagen",lon:12.57,lat:55.68,c:"Denmark"},
+{n:"Aarhus",lon:10.2,lat:56.16,c:"Denmark"},
+{n:"Odense",lon:10.39,lat:55.4,c:"Denmark"},
+{n:"Helsinki",lon:24.94,lat:60.17,c:"Finland"},
+{n:"Tampere",lon:23.76,lat:61.5,c:"Finland"},
+{n:"Turku",lon:22.27,lat:60.45,c:"Finland"},
+{n:"Dublin",lon:-6.26,lat:53.35,c:"Ireland"},
+{n:"Cork",lon:-8.47,lat:51.9,c:"Ireland"},
+{n:"Galway",lon:-9.05,lat:53.27,c:"Ireland"},
+{n:"Athens",lon:23.73,lat:37.98,c:"Greece"},
+{n:"Thessaloniki",lon:22.94,lat:40.64,c:"Greece"},
+{n:"Patras",lon:21.73,lat:38.25,c:"Greece"},
+{n:"Heraklion",lon:25.13,lat:35.34,c:"Greece"},
+{n:"Prague",lon:14.42,lat:50.09,c:"Czech Republic"},
+{n:"Brno",lon:16.61,lat:49.2,c:"Czech Republic"},
+{n:"Ostrava",lon:18.29,lat:49.83,c:"Czech Republic"},
+{n:"Bratislava",lon:17.11,lat:48.15,c:"Slovakia"},
+{n:"Kosice",lon:21.24,lat:48.72,c:"Slovakia"},
+{n:"Budapest",lon:19.04,lat:47.5,c:"Hungary"},
+{n:"Debrecen",lon:21.62,lat:47.53,c:"Hungary"},
+{n:"Bucharest",lon:26.1,lat:44.43,c:"Romania"},
+{n:"Cluj-Napoca",lon:23.6,lat:46.77,c:"Romania"},
+{n:"Timisoara",lon:21.23,lat:45.75,c:"Romania"},
+{n:"Iasi",lon:27.6,lat:47.16,c:"Romania"},
+{n:"Sofia",lon:23.32,lat:42.7,c:"Bulgaria"},
+{n:"Plovdiv",lon:24.75,lat:42.14,c:"Bulgaria"},
+{n:"Varna",lon:27.91,lat:43.21,c:"Bulgaria"},
+{n:"Belgrade",lon:20.46,lat:44.79,c:"Serbia"},
+{n:"Novi Sad",lon:19.83,lat:45.27,c:"Serbia"},
+{n:"Zagreb",lon:15.98,lat:45.81,c:"Croatia"},
+{n:"Split",lon:16.44,lat:43.51,c:"Croatia"},
+{n:"Dubrovnik",lon:18.09,lat:42.65,c:"Croatia"},
+{n:"Ljubljana",lon:14.51,lat:46.06,c:"Slovenia"},
+{n:"Sarajevo",lon:18.41,lat:43.86,c:"Bosnia and Herzegovina"},
+{n:"Podgorica",lon:19.26,lat:42.44,c:"Montenegro"},
+{n:"Tirana",lon:19.82,lat:41.33,c:"Albania"},
+{n:"Skopje",lon:21.43,lat:42.0,c:"North Macedonia"},
+{n:"Pristina",lon:21.17,lat:42.67,c:"Kosovo"},
+{n:"Kyiv",lon:30.52,lat:50.45,c:"Ukraine"},
+{n:"Kharkiv",lon:36.23,lat:49.99,c:"Ukraine"},
+{n:"Odesa",lon:30.72,lat:46.48,c:"Ukraine"},
+{n:"Lviv",lon:24.03,lat:49.84,c:"Ukraine"},
+{n:"Dnipro",lon:35.04,lat:48.46,c:"Ukraine"},
+{n:"Minsk",lon:27.57,lat:53.9,c:"Belarus"},
+{n:"Chisinau",lon:28.86,lat:47.01,c:"Moldova"},
+{n:"Vilnius",lon:25.28,lat:54.69,c:"Lithuania"},
+{n:"Kaunas",lon:23.9,lat:54.9,c:"Lithuania"},
+{n:"Riga",lon:24.11,lat:56.95,c:"Latvia"},
+{n:"Tallinn",lon:24.75,lat:59.44,c:"Estonia"},
+{n:"Moscow",lon:37.62,lat:55.75,c:"Russia"},
+{n:"Saint Petersburg",lon:30.31,lat:59.94,c:"Russia"},
+{n:"Novosibirsk",lon:82.94,lat:55.03,c:"Russia"},
+{n:"Yekaterinburg",lon:60.6,lat:56.84,c:"Russia"},
+{n:"Kazan",lon:49.12,lat:55.79,c:"Russia"},
+{n:"Sochi",lon:39.73,lat:43.6,c:"Russia"},
+{n:"Reykjavik",lon:-21.94,lat:64.15,c:"Iceland"},
+{n:"Luxembourg City",lon:6.13,lat:49.61,c:"Luxembourg"},
+{n:"Valletta",lon:14.51,lat:35.9,c:"Malta"},
+{n:"Nicosia",lon:33.36,lat:35.17,c:"Cyprus"},
+{n:"Monaco",lon:7.42,lat:43.73,c:"Monaco"},
+{n:"Andorra la Vella",lon:1.52,lat:42.51,c:"Andorra"},
+{n:"San Marino",lon:12.45,lat:43.94,c:"San Marino"},
+{n:"Istanbul",lon:28.98,lat:41.01,c:"Turkey"},
+{n:"Ankara",lon:32.85,lat:39.93,c:"Turkey"},
+{n:"Izmir",lon:27.14,lat:38.42,c:"Turkey"},
+{n:"Antalya",lon:30.71,lat:36.9,c:"Turkey"},
+{n:"New York",lon:-74.01,lat:40.71,c:"United States"},
+{n:"Los Angeles",lon:-118.24,lat:34.05,c:"United States"},
+{n:"Chicago",lon:-87.63,lat:41.88,c:"United States"},
+{n:"Houston",lon:-95.37,lat:29.76,c:"United States"},
+{n:"Phoenix",lon:-112.07,lat:33.45,c:"United States"},
+{n:"Philadelphia",lon:-75.16,lat:39.95,c:"United States"},
+{n:"San Antonio",lon:-98.49,lat:29.42,c:"United States"},
+{n:"San Diego",lon:-117.16,lat:32.72,c:"United States"},
+{n:"Dallas",lon:-96.8,lat:32.78,c:"United States"},
+{n:"San Jose (US)",lon:-121.89,lat:37.34,c:"United States"},
+{n:"Austin",lon:-97.74,lat:30.27,c:"United States"},
+{n:"Jacksonville",lon:-81.66,lat:30.33,c:"United States"},
+{n:"San Francisco",lon:-122.42,lat:37.77,c:"United States"},
+{n:"Columbus",lon:-82.99,lat:39.96,c:"United States"},
+{n:"Charlotte",lon:-80.84,lat:35.23,c:"United States"},
+{n:"Indianapolis",lon:-86.16,lat:39.77,c:"United States"},
+{n:"Seattle",lon:-122.33,lat:47.61,c:"United States"},
+{n:"Denver",lon:-104.99,lat:39.74,c:"United States"},
+{n:"Washington",lon:-77.04,lat:38.91,c:"United States"},
+{n:"Boston",lon:-71.06,lat:42.36,c:"United States"},
+{n:"Nashville",lon:-86.78,lat:36.16,c:"United States"},
+{n:"Detroit",lon:-83.05,lat:42.33,c:"United States"},
+{n:"Portland (Oregon)",lon:-122.68,lat:45.52,c:"United States"},
+{n:"Memphis",lon:-90.05,lat:35.15,c:"United States"},
+{n:"Las Vegas",lon:-115.14,lat:36.17,c:"United States"},
+{n:"Louisville",lon:-85.76,lat:38.25,c:"United States"},
+{n:"Baltimore",lon:-76.61,lat:39.29,c:"United States"},
+{n:"Milwaukee",lon:-87.91,lat:43.04,c:"United States"},
+{n:"Albuquerque",lon:-106.65,lat:35.08,c:"United States"},
+{n:"Tucson",lon:-110.97,lat:32.22,c:"United States"},
+{n:"Fresno",lon:-119.79,lat:36.75,c:"United States"},
+{n:"Sacramento",lon:-121.49,lat:38.58,c:"United States"},
+{n:"Kansas City",lon:-94.58,lat:39.1,c:"United States"},
+{n:"Atlanta",lon:-84.39,lat:33.75,c:"United States"},
+{n:"Miami",lon:-80.19,lat:25.76,c:"United States"},
+{n:"Raleigh",lon:-78.64,lat:35.78,c:"United States"},
+{n:"Omaha",lon:-95.94,lat:41.26,c:"United States"},
+{n:"Colorado Springs",lon:-104.82,lat:38.83,c:"United States"},
+{n:"Long Beach",lon:-118.19,lat:33.77,c:"United States"},
+{n:"Virginia Beach",lon:-75.98,lat:36.85,c:"United States"},
+{n:"Oakland",lon:-122.27,lat:37.8,c:"United States"},
+{n:"Minneapolis",lon:-93.27,lat:44.98,c:"United States"},
+{n:"Tulsa",lon:-95.99,lat:36.15,c:"United States"},
+{n:"Tampa",lon:-82.46,lat:27.95,c:"United States"},
+{n:"New Orleans",lon:-90.07,lat:29.95,c:"United States"},
+{n:"Wichita",lon:-97.34,lat:37.69,c:"United States"},
+{n:"Cleveland",lon:-81.69,lat:41.5,c:"United States"},
+{n:"Bakersfield",lon:-119.02,lat:35.37,c:"United States"},
+{n:"Honolulu",lon:-157.86,lat:21.31,c:"United States"},
+{n:"Corpus Christi",lon:-97.4,lat:27.8,c:"United States"},
+{n:"Lexington",lon:-84.5,lat:38.04,c:"United States"},
+{n:"Pittsburgh",lon:-79.99,lat:40.44,c:"United States"},
+{n:"St. Louis",lon:-90.2,lat:38.63,c:"United States"},
+{n:"Cincinnati",lon:-84.51,lat:39.1,c:"United States"},
+{n:"Anchorage",lon:-149.9,lat:61.22,c:"United States"},
+{n:"Orlando",lon:-81.38,lat:28.54,c:"United States"},
+{n:"Buffalo",lon:-78.88,lat:42.89,c:"United States"},
+{n:"Lincoln",lon:-96.68,lat:40.81,c:"United States"},
+{n:"St. Paul",lon:-93.09,lat:44.95,c:"United States"},
+{n:"Greensboro",lon:-79.79,lat:36.07,c:"United States"},
+{n:"Toledo",lon:-83.56,lat:41.66,c:"United States"},
+{n:"Madison",lon:-89.4,lat:43.07,c:"United States"},
+{n:"Reno",lon:-119.81,lat:39.53,c:"United States"},
+{n:"Durham",lon:-78.9,lat:35.99,c:"United States"},
+{n:"Boise",lon:-116.2,lat:43.62,c:"United States"},
+{n:"Salt Lake City",lon:-111.89,lat:40.76,c:"United States"},
+{n:"Little Rock",lon:-92.29,lat:34.75,c:"United States"},
+{n:"Baton Rouge",lon:-91.19,lat:30.45,c:"United States"},
+{n:"Des Moines",lon:-93.6,lat:41.6,c:"United States"},
+{n:"Providence",lon:-71.41,lat:41.82,c:"United States"},
+{n:"Richmond",lon:-77.44,lat:37.54,c:"United States"},
+{n:"Spokane",lon:-117.43,lat:47.66,c:"United States"},
+{n:"Tacoma",lon:-122.44,lat:47.25,c:"United States"},
+{n:"Jackson (US)",lon:-90.18,lat:32.3,c:"United States"},
+{n:"Charleston",lon:-79.93,lat:38.35,c:"United States"},
+{n:"Columbia",lon:-81.03,lat:34.0,c:"United States"},
+{n:"Birmingham (US)",lon:-86.8,lat:33.52,c:"United States"},
+{n:"Montgomery",lon:-86.3,lat:32.37,c:"United States"},
+{n:"Savannah",lon:-81.1,lat:32.08,c:"United States"},
+{n:"Knoxville",lon:-83.92,lat:35.96,c:"United States"},
+{n:"Chattanooga",lon:-85.31,lat:35.05,c:"United States"},
+{n:"Albany",lon:-73.76,lat:42.65,c:"United States"},
+{n:"Rochester",lon:-77.61,lat:43.16,c:"United States"},
+{n:"Syracuse",lon:-76.15,lat:43.05,c:"United States"},
+{n:"Hartford",lon:-72.68,lat:41.76,c:"United States"},
+{n:"Portland (Maine)",lon:-70.26,lat:43.66,c:"United States"},
+{n:"Burlington",lon:-73.21,lat:44.48,c:"United States"},
+{n:"Fargo",lon:-96.79,lat:46.88,c:"United States"},
+{n:"Sioux Falls",lon:-96.73,lat:43.55,c:"United States"},
+{n:"Cheyenne",lon:-104.82,lat:41.14,c:"United States"},
+{n:"Billings",lon:-108.5,lat:45.78,c:"United States"},
+{n:"Helena",lon:-112.04,lat:46.59,c:"United States"},
+{n:"Annapolis",lon:-76.49,lat:38.98,c:"United States"},
+{n:"Augusta",lon:-69.78,lat:44.31,c:"United States"},
+{n:"Bismarck",lon:-100.78,lat:46.81,c:"United States"},
+{n:"Carson City",lon:-119.77,lat:39.16,c:"United States"},
+{n:"Concord",lon:-71.55,lat:43.21,c:"United States"},
+{n:"Dover",lon:-75.52,lat:39.16,c:"United States"},
+{n:"Frankfort",lon:-84.87,lat:38.2,c:"United States"},
+{n:"Harrisburg",lon:-76.88,lat:40.27,c:"United States"},
+{n:"Jefferson City",lon:-92.17,lat:38.58,c:"United States"},
+{n:"Juneau",lon:-134.42,lat:58.3,c:"United States"},
+{n:"Lansing",lon:-84.56,lat:42.73,c:"United States"},
+{n:"Montpelier",lon:-72.58,lat:44.26,c:"United States"},
+{n:"Olympia",lon:-122.9,lat:47.04,c:"United States"},
+{n:"Pierre",lon:-100.35,lat:44.37,c:"United States"},
+{n:"Santa Fe",lon:-105.94,lat:35.69,c:"United States"},
+{n:"Topeka",lon:-95.68,lat:39.06,c:"United States"},
+{n:"Trenton",lon:-74.76,lat:40.22,c:"United States"},
+{n:"Oklahoma City",lon:-97.52,lat:35.47,c:"United States"},
+{n:"Toronto",lon:-79.38,lat:43.65,c:"Canada"},
+{n:"Montreal",lon:-73.57,lat:45.5,c:"Canada"},
+{n:"Vancouver",lon:-123.12,lat:49.28,c:"Canada"},
+{n:"Calgary",lon:-114.07,lat:51.05,c:"Canada"},
+{n:"Edmonton",lon:-113.49,lat:53.55,c:"Canada"},
+{n:"Ottawa",lon:-75.7,lat:45.42,c:"Canada"},
+{n:"Winnipeg",lon:-97.14,lat:49.9,c:"Canada"},
+{n:"Quebec City",lon:-71.21,lat:46.81,c:"Canada"},
+{n:"Hamilton",lon:-79.87,lat:43.26,c:"Canada"},
+{n:"Kitchener",lon:-80.49,lat:43.45,c:"Canada"},
+{n:"London (Canada)",lon:-81.25,lat:42.98,c:"Canada"},
+{n:"Halifax",lon:-63.57,lat:44.65,c:"Canada"},
+{n:"Victoria",lon:-123.37,lat:48.43,c:"Canada"},
+{n:"Saskatoon",lon:-106.63,lat:52.13,c:"Canada"},
+{n:"Regina",lon:-104.62,lat:50.45,c:"Canada"},
+{n:"St. John's",lon:-52.71,lat:47.56,c:"Canada"},
+{n:"Windsor",lon:-83.04,lat:42.32,c:"Canada"},
+{n:"Mexico City",lon:-99.13,lat:19.43,c:"Mexico"},
+{n:"Guadalajara",lon:-103.35,lat:20.67,c:"Mexico"},
+{n:"Monterrey",lon:-100.32,lat:25.67,c:"Mexico"},
+{n:"Puebla",lon:-98.2,lat:19.04,c:"Mexico"},
+{n:"Tijuana",lon:-117.04,lat:32.53,c:"Mexico"},
+{n:"Cancun",lon:-86.85,lat:21.16,c:"Mexico"},
+{n:"Merida",lon:-89.62,lat:20.97,c:"Mexico"},
+{n:"Guatemala City",lon:-90.52,lat:14.63,c:"Guatemala"},
+{n:"San Salvador",lon:-89.19,lat:13.69,c:"El Salvador"},
+{n:"Tegucigalpa",lon:-87.2,lat:14.1,c:"Honduras"},
+{n:"Managua",lon:-86.25,lat:12.14,c:"Nicaragua"},
+{n:"San Jose (Costa Rica)",lon:-84.09,lat:9.93,c:"Costa Rica"},
+{n:"Panama City",lon:-79.52,lat:8.98,c:"Panama"},
+{n:"Bogota",lon:-74.08,lat:4.71,c:"Colombia"},
+{n:"Medellin",lon:-75.56,lat:6.25,c:"Colombia"},
+{n:"Cali",lon:-76.52,lat:3.45,c:"Colombia"},
+{n:"Cartagena",lon:-75.48,lat:10.39,c:"Colombia"},
+{n:"Caracas",lon:-66.9,lat:10.48,c:"Venezuela"},
+{n:"Maracaibo",lon:-71.65,lat:10.65,c:"Venezuela"},
+{n:"Quito",lon:-78.47,lat:-0.18,c:"Ecuador"},
+{n:"Guayaquil",lon:-79.9,lat:-2.19,c:"Ecuador"},
+{n:"Lima",lon:-77.03,lat:-12.05,c:"Peru"},
+{n:"Arequipa",lon:-71.54,lat:-16.4,c:"Peru"},
+{n:"Cusco",lon:-71.97,lat:-13.53,c:"Peru"},
+{n:"La Paz",lon:-68.15,lat:-16.5,c:"Bolivia"},
+{n:"Santa Cruz (Bolivia)",lon:-63.18,lat:-17.78,c:"Bolivia"},
+{n:"Santiago",lon:-70.65,lat:-33.45,c:"Chile"},
+{n:"Valparaiso",lon:-71.63,lat:-33.05,c:"Chile"},
+{n:"Buenos Aires",lon:-58.38,lat:-34.6,c:"Argentina"},
+{n:"Cordoba (Argentina)",lon:-64.18,lat:-31.42,c:"Argentina"},
+{n:"Rosario",lon:-60.64,lat:-32.94,c:"Argentina"},
+{n:"Mendoza",lon:-68.85,lat:-32.89,c:"Argentina"},
+{n:"Montevideo",lon:-56.16,lat:-34.9,c:"Uruguay"},
+{n:"Asuncion",lon:-57.63,lat:-25.28,c:"Paraguay"},
+{n:"Sao Paulo",lon:-46.63,lat:-23.55,c:"Brazil"},
+{n:"Rio de Janeiro",lon:-43.2,lat:-22.91,c:"Brazil"},
+{n:"Brasilia",lon:-47.93,lat:-15.78,c:"Brazil"},
+{n:"Salvador",lon:-38.5,lat:-12.97,c:"Brazil"},
+{n:"Fortaleza",lon:-38.54,lat:-3.72,c:"Brazil"},
+{n:"Belo Horizonte",lon:-43.94,lat:-19.92,c:"Brazil"},
+{n:"Recife",lon:-34.88,lat:-8.05,c:"Brazil"},
+{n:"Porto Alegre",lon:-51.23,lat:-30.03,c:"Brazil"},
+{n:"Curitiba",lon:-49.27,lat:-25.43,c:"Brazil"},
+{n:"Manaus",lon:-60.02,lat:-3.12,c:"Brazil"},
+{n:"Havana",lon:-82.38,lat:23.13,c:"Cuba"},
+{n:"Santo Domingo",lon:-69.9,lat:18.49,c:"Dominican Republic"},
+{n:"San Juan",lon:-66.11,lat:18.47,c:"Puerto Rico"},
+{n:"Kingston",lon:-76.79,lat:17.97,c:"Jamaica"},
+{n:"Port-au-Prince",lon:-72.34,lat:18.55,c:"Haiti"},
+{n:"Nassau",lon:-77.35,lat:25.06,c:"Bahamas"},
+{n:"Tel Aviv",lon:34.78,lat:32.08,c:"Israel"},
+{n:"Jerusalem",lon:35.22,lat:31.77,c:"Israel"},
+{n:"Beirut",lon:35.5,lat:33.89,c:"Lebanon"},
+{n:"Damascus",lon:36.28,lat:33.51,c:"Syria"},
+{n:"Amman",lon:35.93,lat:31.95,c:"Jordan"},
+{n:"Baghdad",lon:44.4,lat:33.32,c:"Iraq"},
+{n:"Riyadh",lon:46.72,lat:24.71,c:"Saudi Arabia"},
+{n:"Jeddah",lon:39.19,lat:21.54,c:"Saudi Arabia"},
+{n:"Mecca",lon:39.83,lat:21.42,c:"Saudi Arabia"},
+{n:"Dubai",lon:55.27,lat:25.2,c:"United Arab Emirates"},
+{n:"Abu Dhabi",lon:54.37,lat:24.45,c:"United Arab Emirates"},
+{n:"Doha",lon:51.53,lat:25.29,c:"Qatar"},
+{n:"Kuwait City",lon:47.98,lat:29.38,c:"Kuwait"},
+{n:"Manama",lon:50.59,lat:26.23,c:"Bahrain"},
+{n:"Muscat",lon:58.4,lat:23.61,c:"Oman"},
+{n:"Tehran",lon:51.39,lat:35.69,c:"Iran"},
+{n:"Isfahan",lon:51.68,lat:32.65,c:"Iran"},
+{n:"Sanaa",lon:44.21,lat:15.35,c:"Yemen"},
+{n:"Cairo",lon:31.24,lat:30.04,c:"Egypt"},
+{n:"Alexandria",lon:29.92,lat:31.2,c:"Egypt"},
+{n:"Casablanca",lon:-7.59,lat:33.57,c:"Morocco"},
+{n:"Rabat",lon:-6.83,lat:34.02,c:"Morocco"},
+{n:"Marrakech",lon:-7.99,lat:31.63,c:"Morocco"},
+{n:"Tunis",lon:10.18,lat:36.81,c:"Tunisia"},
+{n:"Algiers",lon:3.06,lat:36.75,c:"Algeria"},
+{n:"Tripoli",lon:13.19,lat:32.89,c:"Libya"},
+{n:"Lagos",lon:3.39,lat:6.52,c:"Nigeria"},
+{n:"Abuja",lon:7.49,lat:9.08,c:"Nigeria"},
+{n:"Kano",lon:8.52,lat:12.0,c:"Nigeria"},
+{n:"Accra",lon:-0.19,lat:5.6,c:"Ghana"},
+{n:"Abidjan",lon:-4.03,lat:5.36,c:"Ivory Coast"},
+{n:"Dakar",lon:-17.45,lat:14.69,c:"Senegal"},
+{n:"Bamako",lon:-8.0,lat:12.65,c:"Mali"},
+{n:"Nairobi",lon:36.82,lat:-1.29,c:"Kenya"},
+{n:"Mombasa",lon:39.66,lat:-4.05,c:"Kenya"},
+{n:"Addis Ababa",lon:38.75,lat:9.03,c:"Ethiopia"},
+{n:"Kampala",lon:32.58,lat:0.35,c:"Uganda"},
+{n:"Dar es Salaam",lon:39.28,lat:-6.79,c:"Tanzania"},
+{n:"Kigali",lon:30.06,lat:-1.94,c:"Rwanda"},
+{n:"Khartoum",lon:32.53,lat:15.55,c:"Sudan"},
+{n:"Johannesburg",lon:28.05,lat:-26.2,c:"South Africa"},
+{n:"Cape Town",lon:18.42,lat:-33.92,c:"South Africa"},
+{n:"Durban",lon:31.02,lat:-29.85,c:"South Africa"},
+{n:"Pretoria",lon:28.19,lat:-25.75,c:"South Africa"},
+{n:"Lusaka",lon:28.32,lat:-15.39,c:"Zambia"},
+{n:"Harare",lon:31.05,lat:-17.83,c:"Zimbabwe"},
+{n:"Maputo",lon:32.58,lat:-25.97,c:"Mozambique"},
+{n:"Luanda",lon:13.23,lat:-8.84,c:"Angola"},
+{n:"Kinshasa",lon:15.27,lat:-4.44,c:"DR Congo"},
+{n:"Yaounde",lon:11.5,lat:3.87,c:"Cameroon"},
+{n:"Douala",lon:9.71,lat:4.05,c:"Cameroon"},
+{n:"Freetown",lon:-13.23,lat:8.48,c:"Sierra Leone"},
+{n:"Monrovia",lon:-10.8,lat:6.3,c:"Liberia"},
+{n:"Beijing",lon:116.4,lat:39.9,c:"China"},
+{n:"Shanghai",lon:121.47,lat:31.23,c:"China"},
+{n:"Guangzhou",lon:113.26,lat:23.13,c:"China"},
+{n:"Shenzhen",lon:114.06,lat:22.54,c:"China"},
+{n:"Chengdu",lon:104.07,lat:30.67,c:"China"},
+{n:"Chongqing",lon:106.5,lat:29.56,c:"China"},
+{n:"Wuhan",lon:114.3,lat:30.59,c:"China"},
+{n:"Xi'an",lon:108.95,lat:34.27,c:"China"},
+{n:"Hangzhou",lon:120.15,lat:30.28,c:"China"},
+{n:"Nanjing",lon:118.8,lat:32.06,c:"China"},
+{n:"Tianjin",lon:117.2,lat:39.13,c:"China"},
+{n:"Qingdao",lon:120.38,lat:36.07,c:"China"},
+{n:"Harbin",lon:126.53,lat:45.8,c:"China"},
+{n:"Kunming",lon:102.83,lat:25.04,c:"China"},
+{n:"Xiamen",lon:118.09,lat:24.48,c:"China"},
+{n:"Tokyo",lon:139.69,lat:35.68,c:"Japan"},
+{n:"Osaka",lon:135.5,lat:34.69,c:"Japan"},
+{n:"Yokohama",lon:139.64,lat:35.44,c:"Japan"},
+{n:"Nagoya",lon:136.91,lat:35.18,c:"Japan"},
+{n:"Sapporo",lon:141.35,lat:43.06,c:"Japan"},
+{n:"Fukuoka",lon:130.4,lat:33.59,c:"Japan"},
+{n:"Kobe",lon:135.18,lat:34.69,c:"Japan"},
+{n:"Kyoto",lon:135.77,lat:35.01,c:"Japan"},
+{n:"Hiroshima",lon:132.46,lat:34.4,c:"Japan"},
+{n:"Sendai",lon:140.87,lat:38.27,c:"Japan"},
+{n:"Seoul",lon:126.98,lat:37.57,c:"South Korea"},
+{n:"Busan",lon:129.08,lat:35.18,c:"South Korea"},
+{n:"Incheon",lon:126.7,lat:37.46,c:"South Korea"},
+{n:"Daegu",lon:128.6,lat:35.87,c:"South Korea"},
+{n:"Taipei",lon:121.56,lat:25.03,c:"Taiwan"},
+{n:"Kaohsiung",lon:120.31,lat:22.63,c:"Taiwan"},
+{n:"Hong Kong",lon:114.17,lat:22.28,c:"Hong Kong"},
+{n:"Macau",lon:113.55,lat:22.2,c:"Macau"},
+{n:"Mumbai",lon:72.88,lat:19.08,c:"India"},
+{n:"Delhi",lon:77.1,lat:28.7,c:"India"},
+{n:"Bangalore",lon:77.59,lat:12.97,c:"India"},
+{n:"Hyderabad",lon:78.49,lat:17.39,c:"India"},
+{n:"Chennai",lon:80.27,lat:13.08,c:"India"},
+{n:"Kolkata",lon:88.36,lat:22.57,c:"India"},
+{n:"Pune",lon:73.86,lat:18.52,c:"India"},
+{n:"Ahmedabad",lon:72.57,lat:23.02,c:"India"},
+{n:"Jaipur",lon:75.79,lat:26.91,c:"India"},
+{n:"Lucknow",lon:80.95,lat:26.85,c:"India"},
+{n:"Surat",lon:72.83,lat:21.17,c:"India"},
+{n:"Karachi",lon:67.01,lat:24.86,c:"Pakistan"},
+{n:"Lahore",lon:74.36,lat:31.55,c:"Pakistan"},
+{n:"Islamabad",lon:73.06,lat:33.68,c:"Pakistan"},
+{n:"Dhaka",lon:90.41,lat:23.81,c:"Bangladesh"},
+{n:"Chittagong",lon:91.8,lat:22.34,c:"Bangladesh"},
+{n:"Colombo",lon:79.86,lat:6.93,c:"Sri Lanka"},
+{n:"Kathmandu",lon:85.32,lat:27.72,c:"Nepal"},
+{n:"Bangkok",lon:100.5,lat:13.75,c:"Thailand"},
+{n:"Chiang Mai",lon:98.98,lat:18.79,c:"Thailand"},
+{n:"Phuket",lon:98.39,lat:7.89,c:"Thailand"},
+{n:"Hanoi",lon:105.85,lat:21.03,c:"Vietnam"},
+{n:"Ho Chi Minh City",lon:106.63,lat:10.82,c:"Vietnam"},
+{n:"Da Nang",lon:108.22,lat:16.05,c:"Vietnam"},
+{n:"Phnom Penh",lon:104.9,lat:11.55,c:"Cambodia"},
+{n:"Vientiane",lon:102.6,lat:17.97,c:"Laos"},
+{n:"Yangon",lon:96.16,lat:16.87,c:"Myanmar"},
+{n:"Kuala Lumpur",lon:101.69,lat:3.14,c:"Malaysia"},
+{n:"Penang",lon:100.33,lat:5.41,c:"Malaysia"},
+{n:"Singapore",lon:103.82,lat:1.35,c:"Singapore"},
+{n:"Jakarta",lon:106.85,lat:-6.21,c:"Indonesia"},
+{n:"Surabaya",lon:112.75,lat:-7.25,c:"Indonesia"},
+{n:"Denpasar",lon:115.22,lat:-8.65,c:"Indonesia"},
+{n:"Bandung",lon:107.61,lat:-6.91,c:"Indonesia"},
+{n:"Medan",lon:98.68,lat:3.6,c:"Indonesia"},
+{n:"Manila",lon:120.98,lat:14.6,c:"Philippines"},
+{n:"Cebu City",lon:123.9,lat:10.32,c:"Philippines"},
+{n:"Davao",lon:125.61,lat:7.07,c:"Philippines"},
+{n:"Ulaanbaatar",lon:106.92,lat:47.92,c:"Mongolia"},
+{n:"Almaty",lon:76.95,lat:43.24,c:"Kazakhstan"},
+{n:"Astana",lon:71.43,lat:51.18,c:"Kazakhstan"},
+{n:"Tashkent",lon:69.28,lat:41.31,c:"Uzbekistan"},
+{n:"Sydney",lon:151.21,lat:-33.87,c:"Australia"},
+{n:"Melbourne",lon:144.96,lat:-37.81,c:"Australia"},
+{n:"Brisbane",lon:153.03,lat:-27.47,c:"Australia"},
+{n:"Perth",lon:115.86,lat:-31.95,c:"Australia"},
+{n:"Adelaide",lon:138.6,lat:-34.93,c:"Australia"},
+{n:"Canberra",lon:149.13,lat:-35.28,c:"Australia"},
+{n:"Gold Coast",lon:153.4,lat:-28.02,c:"Australia"},
+{n:"Auckland",lon:174.76,lat:-36.85,c:"New Zealand"},
+{n:"Wellington",lon:174.78,lat:-41.29,c:"New Zealand"},
+{n:"Christchurch",lon:172.64,lat:-43.53,c:"New Zealand"},
+{n:"Suva",lon:178.44,lat:-18.14,c:"Fiji"},
+{n:"Port Moresby",lon:147.18,lat:-9.48,c:"Papua New Guinea"}
+];
+
+// Procedural route-graph generator: given two city names and CITY_DB, produce
+// a CITIES/ROUTES graph in the same shape the game already renders/plays with.
+// Pure, synchronous, no network. Deterministic for a given input pair (seeded
+// by the pair's own names, so re-generating the same trip looks the same).
+
+const THEME_KEYS = ["flirty","love","rewind","future","career","health","travel","silly"];
+
+// How intimate each card category reads — used to weight which cards show up
+// more when the couple picks how deep they want to go.
+const THEME_DEPTH = { silly:1, travel:1, health:1, flirty:2, career:2, rewind:3, love:4, future:4 };
+
+// Big, famous, or genuinely fun-to-see cities — preferred as waypoints over an
+// obscure-but-closer-to-the-line city, so a trip reads like a highlight reel
+// instead of a random string of secondary towns.
+const BIGFUN = new Set([
+  "London (UK)","Manchester","Glasgow","Edinburgh","Liverpool","Paris","Marseille","Lyon","Nice",
+  "Bordeaux","Berlin","Hamburg","Munich","Cologne","Frankfurt","Rome","Milan","Naples","Venice",
+  "Florence","Turin","Madrid","Barcelona","Valencia","Seville","Bilbao","Ibiza","Palma","Warsaw",
+  "Krakow","Gdansk","Amsterdam","Rotterdam","The Hague","Lisbon","Porto","Brussels","Antwerp",
+  "Bruges","Zurich","Geneva","Vienna","Salzburg","Stockholm","Gothenburg","Oslo","Bergen",
+  "Copenhagen","Helsinki","Dublin","Athens","Santorini","Mykonos","Prague","Budapest","Bucharest",
+  "Belgrade","Zagreb","Split","Dubrovnik","Ljubljana","Sarajevo","Kyiv","Vilnius","Riga","Tallinn",
+  "Moscow","Saint Petersburg","Reykjavik","Monaco","Istanbul","Antalya","New York","Los Angeles",
+  "Chicago","San Francisco","San Diego","Las Vegas","Miami","Orlando","Boston","Washington",
+  "Seattle","New Orleans","Austin","Nashville","Denver","Honolulu","Toronto","Montreal","Vancouver",
+  "Quebec City","Mexico City","Cancun","Guadalajara","Havana","Santo Domingo","San Juan","Nassau",
+  "Kingston","Bogota","Medellin","Cartagena","Lima","Cusco","Quito","La Paz","Santiago","Buenos Aires",
+  "Mendoza","Montevideo","Sao Paulo","Rio de Janeiro","Salvador","Recife","Florianopolis","Tel Aviv",
+  "Jerusalem","Beirut","Amman","Petra","Dubai","Abu Dhabi","Doha","Muscat","Marrakech","Casablanca",
+  "Cairo","Luxor","Zanzibar","Nairobi","Mombasa","Cape Town","Johannesburg","Durban","Victoria Falls",
+  "Lagos","Accra","Dakar","Beijing","Shanghai","Guangzhou","Shenzhen","Hong Kong","Macau","Chengdu",
+  "Xi'an","Hangzhou","Tokyo","Kyoto","Osaka","Yokohama","Sapporo","Fukuoka","Hiroshima","Seoul","Busan",
+  "Taipei","Kaohsiung","Mumbai","Delhi","Bangalore","Jaipur","Goa","Kathmandu","Colombo","Male",
+  "Bangkok","Chiang Mai","Phuket","Krabi","Hanoi","Ho Chi Minh City","Hoi An","Siem Reap","Luang Prabang",
+  "Yangon","Kuala Lumpur","Penang","Langkawi","Singapore","Jakarta","Bali","Denpasar","Manila","Cebu City",
+  "Sydney","Melbourne","Brisbane","Perth","Gold Coast","Cairns","Auckland","Wellington","Queenstown","Fiji","Suva"
+]);
+
+// Full name (keeps a disambiguating suffix like "(UK)" intact) vs. base name
+// (suffix stripped) — matching needs both: base for a plain "London" query to
+// find its candidates, full so re-typing the exact suggested "London (UK)"
+// actually resolves instead of looping back to the same ambiguity.
+function cityKeyFull(s){ return String(s||"").trim().toLowerCase(); }
+function cityKey(s){ return cityKeyFull(s).replace(/\s*\([^)]*\)\s*$/,""); }
+
+function ambiguous(query, matches){
+  return {ok:false, reason:`A few places match "${query}" — try the exact name, e.g. ${matches.slice(0,3).map(c=>c.n).join(", ")}.`};
+}
+function findCity(query, db){
+  const qFull = cityKeyFull(query), qBase = cityKey(query);
+  if (!qBase) return {ok:false, reason:"Type a city name."};
+
+  let m = db.filter(c => cityKeyFull(c.n) === qFull);
+  if (m.length === 1) return {ok:true, city:m[0]};
+  if (m.length > 1) return ambiguous(query, m);
+
+  m = db.filter(c => cityKey(c.n) === qBase);
+  if (m.length === 1) return {ok:true, city:m[0]};
+  if (m.length > 1) return ambiguous(query, m);
+
+  m = db.filter(c => cityKeyFull(c.n).startsWith(qFull));
+  if (m.length === 1) return {ok:true, city:m[0]};
+  if (m.length > 1) return ambiguous(query, m);
+
+  m = db.filter(c => cityKeyFull(c.n).includes(qFull));
+  if (m.length === 1) return {ok:true, city:m[0]};
+  if (m.length > 1) return ambiguous(query, m);
+
+  return {ok:false, reason:`Couldn't find "${query}". Try a nearby major city instead.`};
+}
+
+// small deterministic PRNG seeded from a string, so the same two city names
+// always generate the same-looking board (nicer than pure Math.random here).
+function seededRng(seed){
+  let h = 2166136261;
+  for (let i=0;i<seed.length;i++){ h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return function(){ h += 0x6D2B79F5; let t = Math.imul(h ^ (h>>>15), 1 | h); t = (t + Math.imul(t ^ (t>>>7), 61 | t)) ^ t; return ((t ^ (t>>>14)) >>> 0) / 4294967296; };
+}
+
+function buildRoute(startQuery, endQuery, db, extraQueries, depth){
+  const a = findCity(startQuery, db), b = findCity(endQuery, db);
+  if (!a.ok) return {ok:false, reason:a.reason};
+  if (!b.ok) return {ok:false, reason:b.reason};
+  if (a.city === b.city) return {ok:false, reason:"Pick two different cities."};
+  const start = a.city, end = b.city;
+  const rng = seededRng(cityKey(start.n)+"→"+cityKey(end.n));
+
+  // optional user-tagged "must appear on the map" cities — resolved the same
+  // way as start/end, with per-tag errors so a typo doesn't silently drop it.
+  const extraErrors = [];
+  const forcedCities = [];
+  (extraQueries||[]).forEach(q=>{
+    const qq = String(q||"").trim();
+    if (!qq) return;
+    const r = findCity(qq, db);
+    if (!r.ok){ extraErrors.push(`Couldn't add "${qq}": ${r.reason}`); return; }
+    if (r.city === start || r.city === end){ return; } // already on the map
+    if (forcedCities.includes(r.city)) return; // duplicate tag
+    forcedCities.push(r.city);
+  });
+  if (extraErrors.length) return {ok:false, reason: extraErrors.join(" ")};
+
+  // Work in flat lon/lat space; unwrap longitude across the antimeridian so a
+  // Pacific-crossing pair (e.g. Tokyo↔Los Angeles) doesn't wrap the wrong way.
+  let sLon = start.lon, eLon = end.lon;
+  if (Math.abs(eLon - sLon) > 180) eLon += (eLon < sLon ? 360 : -360);
+  const dx0 = eLon - sLon, dy0 = end.lat - start.lat;
+  const totalDist = Math.hypot(dx0, dy0) || 0.0001;
+
+  const unwrap = lon => { let l = lon; while (l - sLon > 180) l -= 360; while (sLon - l > 180) l += 360; return l; };
+
+  // corridor: cities whose projection onto the start→end line falls strictly
+  // between the endpoints and whose perpendicular distance is small relative
+  // to the trip length.
+  const maxPerp = Math.max(totalDist * 0.22, 0.05);
+  const minSepDeg = Math.max(totalDist * 0.06, 0.05);
+
+  // forced (user-tagged) picks go in first and bypass the normal corridor/perp
+  // filters entirely — the user explicitly asked for these — but they still
+  // get a t (for ordering along the route) and participate in the minimum-
+  // spacing check against everything chosen afterward.
+  const picks = [];
+  forcedCities.forEach(c=>{
+    const clon = unwrap(c.lon);
+    const cx = clon - sLon, cy = c.lat - start.lat;
+    const t = (cx*dx0 + cy*dy0) / (totalDist*totalDist);
+    picks.push({c, t: Math.max(0.02, Math.min(0.98, t)), perp: 0, big:true, forced:true, score:-1});
+  });
+
+  const collect = (widen) => {
+    const out = [];
+    const mp = maxPerp * widen;
+    for (const c of db){
+      if (c === start || c === end) continue;
+      if (cityKey(c.n) === cityKey(start.n) || cityKey(c.n) === cityKey(end.n)) continue;
+      if (forcedCities.includes(c) || picks.some(p => p.c === c)) continue;
+      const big = BIGFUN.has(c.n);
+      if (widen > 1 && !big) continue; // widened passes only reach for famous places
+      const clon = unwrap(c.lon);
+      const cx = clon - sLon, cy = c.lat - start.lat;
+      const t = (cx*dx0 + cy*dy0) / (totalDist*totalDist);
+      if (t <= 0.04 || t >= 0.96) continue;
+      const perp = Math.abs(cx*dy0 - cy*dx0) / totalDist;
+      // big/fun cities get a wider corridor and a scoring discount, so a famous
+      // city a little off the direct line still beats an obscure one right on it.
+      if (perp > mp * (big && widen === 1 ? 1.6 : 1)) continue;
+      // too close to the endpoints themselves
+      if (Math.hypot(cx,cy) < 0.35 || Math.hypot(clon-eLon, c.lat-end.lat) < 0.35) continue;
+      out.push({c, t, perp, big, score: big ? Math.max(0, perp - mp*0.45) : perp});
+    }
+    return out;
+  };
+
+  // How many real cities to pick as stops. Route *count* no longer depends on
+  // this (see the parallel-lane edges below), so this only needs to be as
+  // many as makes a good-looking, readable chain — capped at 9 so a very
+  // long haul still stays legible on a phone.
+  // tagged cities occupy the stretch of the trip they fall in, so the auto
+  // picks fill in around them instead of doubling up.
+  const target = Math.max(0, Math.min(9, Math.round(totalDist / 2.2)));
+  const filled = new Array(target).fill(false);
+  picks.forEach(p => { const b = Math.min(target-1, Math.floor(p.t*target)); if (b >= 0) filled[b] = true; });
+
+  // bucket along t, pick the best-scoring (big/fun, then on-line-most)
+  // candidate per bucket, enforce a minimum spacing so nodes don't crowd.
+  // If a stretch of the trip is mostly ocean (Tokyo↔LA), widen the corridor
+  // and try again for the still-empty stretches.
+  for (const widen of [1, 1.5, 2.2]){
+    if (filled.every(Boolean)) break;
+    const candidates = collect(widen);
+    for (let i=0; i<target; i++){
+      if (filled[i]) continue;
+      const lo = i/target, hi = (i+1)/target;
+      const bucket = candidates.filter(p => p.t >= lo && p.t < hi);
+      bucket.sort((p,q)=>p.score-q.score);
+      for (const cand of bucket){
+        const clon = unwrap(cand.c.lon);
+        const tooClose = picks.some(p => { const pl = unwrap(p.c.lon); return Math.hypot(clon-pl, cand.c.lat-p.c.lat) < minSepDeg; });
+        if (!tooClose){ picks.push(cand); filled[i] = true; break; }
+      }
+    }
+  }
+  picks.sort((p,q)=>p.t-q.t);
+
+  // ---------- assemble nodes ----------
+  const nodes = [start, ...picks.map(p=>p.c), end];
+  const used = new Set(); const ids = [];
+  nodes.forEach(n=>{
+    let base = cityKey(n.n).replace(/[^a-z]/g,"").slice(0,3).toUpperCase() || "CTY";
+    let id = base, k=1;
+    while (used.has(id)) id = base + (++k);
+    used.add(id); ids.push(id);
+  });
+  const startId = ids[0], endId = ids[ids.length-1];
+
+  const CITIES = {};
+  nodes.forEach((n,i)=>{ CITIES[ids[i]] = {n:n.n.replace(/\s*\([^)]*\)\s*$/,""), lon: i>0 && i<nodes.length ? unwrap(n.lon) : n.lon, lat:n.lat, end: i===0 || i===ids.length-1}; });
+  // re-unwrap start/end too, for a consistent coordinate space
+  CITIES[startId].lon = sLon; CITIES[endId].lon = eLon;
+
+  // ---------- lay out the board as a single serpentine line, not a real map
+  // or a mesh graph. Every node connects only to its immediate chain
+  // neighbour, so there is never a crossing line, never a hub, and never an
+  // empty region — the wave always uses the exact same footprint. Multiple
+  // parallel "lanes" (like the double-track routes on a real Ticket to Ride
+  // board) between adjacent stops supply the route count instead of
+  // long-distance shortcuts. ----------
+  const VB_W=1060, VB_H=620;
+  const PAD_X = 170, PAD_Y = 95;
+  const n = ids.length;
+  const usableW = VB_W - 2*PAD_X, amp = (VB_H - 2*PAD_Y) / 2;
+  ids.forEach((id,i)=>{
+    const c = CITIES[id];
+    c.x = n > 1 ? PAD_X + i * usableW/(n-1) : VB_W/2;
+    // a smooth envelope (0 at both ends, full swing in the middle) times an
+    // alternating up/down sign — a single continuous river-like curve.
+    const env = n > 2 ? Math.sin(Math.PI * i/(n-1)) : 0;
+    c.y = VB_H/2 + amp * env * (i % 2 ? 1 : -1);
+  });
+
+  // ---------- parallel lanes per segment, tuned so the whole board totals
+  // close to 20 routes without ever exceeding 3 lanes on one segment (any
+  // more reads as clutter) or dropping below 1. ----------
+  const segments = Math.max(0, n - 1);
+  const TARGET_ROUTES = 20;
+  const lanesPerSeg = new Array(segments).fill(2);
+  const order = [...Array(segments).keys()];
+  for (let i=order.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
+  let totalLanes = segments * 2;
+  if (totalLanes < TARGET_ROUTES){
+    let need = Math.min(TARGET_ROUTES - totalLanes, segments);
+    for (let k=0;k<need;k++) lanesPerSeg[order[k]] = 3;
+  } else if (totalLanes > TARGET_ROUTES){
+    let excess = Math.min(totalLanes - TARGET_ROUTES, segments);
+    for (let k=0;k<excess;k++) lanesPerSeg[order[k]] = 1;
+  }
+
+  // ---------- label anchors: every stop — endpoints included — sits on the
+  // outside of its own little bulge (below a dip, above a peak) so a label
+  // never collides with the curve or, for a long city name, the endpoint's
+  // ring marker (endpoints always start at the vertical center, so a
+  // sideways label would butt straight into the ring instead). ----------
+  ids.forEach((id,i)=>{
+    const c = CITIES[id];
+    const below = c.end ? true : c.y > VB_H/2;
+    c.a = "middle"; c.dx = 0;
+    // endpoints get extra clearance: their segment can carry up to 3 parallel
+    // lanes fanned out from the node, and the label needs to clear the
+    // widest one plus its own text ascent, not just the bare node/ring.
+    c.dy = c.end ? (below ? 44 : -36) : (below ? 24 : -18);
+    // keep every label fully inside the frame, using an estimated text width
+    const w = c.n.length * (c.end ? 15.5 : 8.4);
+    const left = c.x + c.dx - w/2, right = left + w;
+    if (left < 10) c.dx += 10 - left;
+    else if (right > VB_W - 10) c.dx -= right - (VB_W - 10);
+    if (c.y + c.dy < 20) c.dy = 22 - c.y;
+    else if (c.y + c.dy > VB_H - 8) c.dy = VB_H - 8 - c.y;
+  });
+
+  // ---------- themes + car counts ----------
+  // "depth" (light / balanced / deep) weights which card categories come up
+  // more often — every category still appears at least once, just more or
+  // less frequently, so the couple gets a board that matches how deep they
+  // said they want to go without losing any variety entirely.
+  const DEPTH_WEIGHTS = {
+    light:    {1:4, 2:2, 3:1, 4:1},
+    balanced: {1:1, 2:1, 3:1, 4:1},
+    deep:     {1:1, 2:1, 3:2, 4:4}
+  };
+  const wmap = DEPTH_WEIGHTS[depth] || DEPTH_WEIGHTS.balanced;
+  const shuffledThemes = [];
+  THEME_KEYS.forEach(k => { const w = wmap[THEME_DEPTH[k]] || 1; for (let m=0; m<w; m++) shuffledThemes.push(k); });
+  for (let i=shuffledThemes.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [shuffledThemes[i],shuffledThemes[j]]=[shuffledThemes[j],shuffledThemes[i]]; }
+
+  const ROUTES = [];
+  for (let s=0; s<segments; s++){
+    const A = CITIES[ids[s]], B = CITIES[ids[s+1]];
+    const d = Math.hypot(B.x-A.x, B.y-A.y);
+    const lanes = lanesPerSeg[s];
+    for (let lane=0; lane<lanes; lane++){
+      const t = shuffledThemes[ROUTES.length % shuffledThemes.length];
+      ROUTES.push({
+        id:"r"+ROUTES.length, a:ids[s], b:ids[s+1], t, len:d,
+        cars:Math.max(2,Math.min(4,Math.round(d/70))),
+        lane, lanes // which parallel track this is, and how many share the segment — the renderer offsets them apart
+      });
+    }
+  }
+
+  return {ok:true, cities:CITIES, routes:ROUTES, startId, endId};
+}
+  let PLAYERS = { M:{name:"Player 1", color:"var(--p1)"}, S:{name:"Player 2", color:"var(--p2)"} };
   const other = p => p === "M" ? "S" : "M";
 
   const THEMES = {
@@ -222,7 +1115,7 @@
       "What would you wear if we met tonight?",
       "Send the song that sums up your mood right now.",
       "First date: hug hello, one kiss on the cheek, or two?",
-      "If I showed up in Warsaw tomorrow, where are we going first?",
+      "If I showed up in your city tomorrow, where are we going first?",
       "The most attractive thing someone can do that has nothing to do with looks?",
       "What could someone say on a first date that would make you blush?",
       "Send a selfie of your face reading this question.",
@@ -305,7 +1198,7 @@
     silly:{name:"Silly Detour", short:"Silly", desc:"Absolute nonsense. Mandatory.", c:"#A6CF48", qs:[
       "What animal would you be at a party, and why?",
       "Pineapple on pizza. Defend your answer.",
-      "You're a cat on an Amsterdam balcony for a day. What's the plan?",
+      "You're a cat on a balcony in your city for a day. What's the plan?",
       "Your most useless talent?",
       "Which emoji do you overuse?",
       "If your life were a Brazilian soap opera, what's this week's episode called?",
@@ -317,35 +1210,26 @@
     ]}
   };
 
-  const CITIES = {
-    AMS:{n:"Amsterdam", lon:4.90, lat:52.37, end:true, a:"middle", dx:0, dy:34},
-    BRE:{n:"Bremen", lon:8.80, lat:53.08, a:"end", dx:-12, dy:-10},
-    HAM:{n:"Hamburg", lon:10.00, lat:53.55, a:"middle", dx:0, dy:-16},
-    HAN:{n:"Hanover", lon:9.73, lat:52.37, a:"end", dx:-16, dy:-12},
-    CGN:{n:"Cologne", lon:6.96, lat:50.94, a:"middle", dx:0, dy:30},
-    BER:{n:"Berlin", lon:13.40, lat:52.52, a:"start", dx:12, dy:26},
-    LEI:{n:"Leipzig", lon:12.37, lat:51.34, a:"middle", dx:0, dy:30},
-    SZC:{n:"Szczecin", lon:14.55, lat:53.43, a:"middle", dx:0, dy:-16},
-    POZ:{n:"Poznań", lon:16.93, lat:52.41, a:"start", dx:10, dy:-12},
-    WRO:{n:"Wrocław", lon:17.03, lat:51.11, a:"middle", dx:0, dy:30},
-    LOD:{n:"Łódź", lon:19.46, lat:51.76, a:"middle", dx:0, dy:30},
-    WAW:{n:"Warsaw", lon:21.01, lat:52.23, end:true, a:"end", dx:34, dy:-24}
-  };
-  const px = (lon,lat) => [ (lon-3.8)*56+40, (54.3-lat)*155+40 ];
-  for (const k in CITIES){ const c=CITIES[k]; [c.x,c.y]=px(c.lon,c.lat); }
-
-  const ROUTES = [
-    ["AMS","BRE","rewind"],["AMS","CGN","silly"],["AMS","HAN","flirty"],["CGN","HAN","career"],
-    ["BRE","HAM","travel"],["BRE","HAN","health"],["HAM","BER","love"],["HAM","SZC","silly"],
-    ["HAN","BER","future"],["HAN","LEI","travel"],["CGN","LEI","rewind"],["LEI","BER","health"],
-    ["LEI","WRO","career"],["BER","SZC","flirty"],["BER","POZ","love"],["SZC","POZ","future"],
-    ["WRO","POZ","travel"],["WRO","LOD","flirty"],["POZ","LOD","career"],["LOD","WAW","love"],
-    ["POZ","WAW","flirty"]
-  ].map(([a,b,t],i)=>{
-    const A=CITIES[a],B=CITIES[b]; const d=Math.hypot(B.x-A.x,B.y-A.y);
-    return {id:"r"+i, a, b, t, len:d, cars:Math.max(2,Math.min(4,Math.round(d/70)))};
-  });
-  const RB = Object.fromEntries(ROUTES.map(r=>[r.id,r]));
+  // Cities/routes are generated per-room from the two cities entered in the
+  // setup screen (see routegen, embedded below) — nothing is fixed here.
+  let CITIES = {}, ROUTES = [], RB = {}, START_ID = null, END_ID = null, tripSig = null;
+  function applyTrip(setup){
+    CITIES = setup.cities; ROUTES = setup.routes;
+    RB = Object.fromEntries(ROUTES.map(r=>[r.id,r]));
+    START_ID = setup.startId; END_ID = setup.endId;
+    tripSig = setup.startId+"|"+setup.endId+"|"+setup.routes.length;
+    const A = CITIES[START_ID], B = CITIES[END_ID];
+    document.getElementById("heroTitle").innerHTML = `${esc(A.n)} <span class="arrow">⇄</span> ${esc(B.n)}`;
+    document.getElementById("eyebrowTop").textContent = "Your destination ticket";
+    // great-circle distance between the two real cities — the number the game is about closing
+    const rad = d => d*Math.PI/180;
+    const h = Math.sin(rad(B.lat-A.lat)/2)**2 + Math.cos(rad(A.lat))*Math.cos(rad(B.lat))*Math.sin(rad(B.lon-A.lon)/2)**2;
+    const km = Math.round(6371*2*Math.asin(Math.sqrt(h)));
+    const stops = Object.keys(CITIES).length - 2;
+    document.getElementById("tripMeta").innerHTML =
+      `<b>${km.toLocaleString("en-US")} km</b> apart · ${stops} stop${stops===1?"":"s"} · ${ROUTES.length} routes`;
+    drawMap();
+  }
 
   // ---------- room + live state ----------
   function getRoom(){
@@ -361,22 +1245,64 @@
   const ROOM = getRoom();
   const ENDPOINT = "/.netlify/functions/state?room=" + encodeURIComponent(ROOM);
 
-  // laid[routeId] = ["M","S",...] — who laid each car on that route, in order.
-  const fresh = () => ({v:2, laid:{}, turn:"M", used:{}, draw:null, last:""});
+  // ---------- legacy migration ----------
+  // This app used to ship as a fixed, single-couple Amsterdam⇄Warsaw board
+  // (v:2 state — no `setup` field, just laid/turn/used/draw against a
+  // hardcoded CITIES/ROUTES table). It's now a reusable, anonymized version
+  // where any room's board comes from its own `setup`. A room saved by the
+  // old version still has real, in-progress data in it, so on load we
+  // rebuild that exact original board as a `setup` object and reuse it —
+  // nothing about the game or the standings changes, it just becomes
+  // self-describing like every room created from here on.
+  const LEGACY_CITIES = {
+    AMS:{n:"Amsterdam", lon:4.90, lat:52.37, end:true, a:"middle", dx:0, dy:34},
+    BRE:{n:"Bremen", lon:8.80, lat:53.08, a:"end", dx:-12, dy:-10},
+    HAM:{n:"Hamburg", lon:10.00, lat:53.55, a:"middle", dx:0, dy:-16},
+    HAN:{n:"Hanover", lon:9.73, lat:52.37, a:"end", dx:-16, dy:-12},
+    CGN:{n:"Cologne", lon:6.96, lat:50.94, a:"middle", dx:0, dy:30},
+    BER:{n:"Berlin", lon:13.40, lat:52.52, a:"start", dx:12, dy:26},
+    LEI:{n:"Leipzig", lon:12.37, lat:51.34, a:"middle", dx:0, dy:30},
+    SZC:{n:"Szczecin", lon:14.55, lat:53.43, a:"middle", dx:0, dy:-16},
+    POZ:{n:"Poznań", lon:16.93, lat:52.41, a:"start", dx:10, dy:-12},
+    WRO:{n:"Wrocław", lon:17.03, lat:51.11, a:"middle", dx:0, dy:30},
+    LOD:{n:"Łódź", lon:19.46, lat:51.76, a:"middle", dx:0, dy:30},
+    WAW:{n:"Warsaw", lon:21.01, lat:52.23, end:true, a:"end", dx:34, dy:-24}
+  };
+  (function(){
+    const px = (lon,lat) => [ (lon-3.8)*56+40, (54.3-lat)*155+40 ];
+    for (const k in LEGACY_CITIES){ const c=LEGACY_CITIES[k]; [c.x,c.y]=px(c.lon,c.lat); }
+  })();
+  const LEGACY_ROUTES = [
+    ["AMS","BRE","rewind"],["AMS","CGN","silly"],["AMS","HAN","flirty"],["CGN","HAN","career"],
+    ["BRE","HAM","travel"],["BRE","HAN","health"],["HAM","BER","love"],["HAM","SZC","silly"],
+    ["HAN","BER","future"],["HAN","LEI","travel"],["CGN","LEI","rewind"],["LEI","BER","health"],
+    ["LEI","WRO","career"],["BER","SZC","flirty"],["BER","POZ","love"],["SZC","POZ","future"],
+    ["WRO","POZ","travel"],["WRO","LOD","flirty"],["POZ","LOD","career"],["LOD","WAW","love"],
+    ["POZ","WAW","flirty"]
+  ].map(([a,b,t],i)=>{
+    const A=LEGACY_CITIES[a],B=LEGACY_CITIES[b]; const d=Math.hypot(B.x-A.x,B.y-A.y);
+    return {id:"r"+i, a, b, t, len:d, cars:Math.max(2,Math.min(4,Math.round(d/70))), lane:0, lanes:1};
+  });
+  const LEGACY_SETUP = { names:{M:"Misha", S:"Syrine"}, cities:LEGACY_CITIES, routes:LEGACY_ROUTES, startId:"AMS", endId:"WAW", depth:"balanced" };
 
-  // Upgrade older saved boards so no progress is lost.
+  // setup: null until someone fills in the trip form; then {names:{M,S}, cities, routes, startId, endId}.
+  // laid[routeId] = ["M","S",...] — who laid each car on that route, in order.
+  const fresh = () => ({v:3, setup:null, laid:{}, turn:"M", used:{}, draw:null, last:""});
+
   function normalize(st){
     if (!st || typeof st !== "object") return fresh();
-    const out = {v:2, laid:{}, turn: st.turn==="S" ? "S" : "M", used: st.used || {}, draw: st.draw || null, last: st.last || ""};
-    if (st.laid){
-      for (const id in st.laid) if (RB[id]) out.laid[id] = st.laid[id].slice(0, RB[id].cars);
-    } else if (st.claimed){
-      // v1 boards: a claimed route becomes a fully laid route for its owner.
-      for (const id in st.claimed) if (RB[id]) out.laid[id] = Array(RB[id].cars).fill(st.claimed[id].by);
+    if (st.v !== 3 && st.laid){
+      // pre-anonymization save — same progress, now describing its own board.
+      st = { v:3, setup: LEGACY_SETUP, laid: st.laid, turn: st.turn, used: st.used, draw: st.draw, last: st.last };
     }
-    if (out.draw){
-      if (!RB[out.draw.route] || isComplete(out.draw.route, out.laid)) out.draw = null;
-      else if (out.draw.status !== "rating") out.draw.status = "open";
+    const out = {v:3, setup: st.setup || null, laid:{}, turn: st.turn==="S" ? "S" : "M", used: st.used || {}, draw: st.draw || null, last: st.last || ""};
+    if (out.setup && st.laid){
+      const rb = Object.fromEntries((out.setup.routes||[]).map(r=>[r.id,r]));
+      for (const id in st.laid) if (rb[id]) out.laid[id] = st.laid[id].slice(0, rb[id].cars);
+      if (out.draw && (!rb[out.draw.route] || (out.laid[out.draw.route]||[]).length >= rb[out.draw.route].cars)) out.draw = null;
+      else if (out.draw && out.draw.status !== "rating") out.draw.status = "open";
+    } else {
+      out.laid = {}; out.draw = null;
     }
     return out;
   }
@@ -402,8 +1328,25 @@
   // "You" for whichever player is on this phone, their real name for the other.
   function label(p){ return p===ME ? "You" : PLAYERS[p].name; }
   const verb = (p, you, them) => p===ME ? you : them;
-  document.querySelectorAll("#idpick [data-me]").forEach(b=>{ b.onclick=()=>setMe(b.dataset.me); });
   document.getElementById("whoamiBtn").onclick = ()=>{ document.getElementById("idpick").hidden = false; };
+
+  // ---------- trip setup (first phone in fills this in; it syncs to both) ----------
+  document.getElementById("setupForm").addEventListener("submit", (e)=>{
+    e.preventDefault();
+    const n1 = document.getElementById("setupName1").value.trim();
+    const n2 = document.getElementById("setupName2").value.trim();
+    const c1 = document.getElementById("setupCity1").value.trim();
+    const c2 = document.getElementById("setupCity2").value.trim();
+    const extra = document.getElementById("setupExtraCities").value.split(",").map(s=>s.trim()).filter(Boolean);
+    const depth = (document.querySelector('input[name="depth"]:checked')||{}).value || "balanced";
+    const errBox = document.getElementById("setupError");
+    const result = buildRoute(c1, c2, CITY_DB, extra, depth);
+    if (!result.ok){ errBox.textContent = result.reason; errBox.hidden = false; return; }
+    errBox.hidden = true;
+    S.setup = { names:{M:n1||"Player 1", S:n2||"Player 2"}, cities:result.cities, routes:result.routes, startId:result.startId, endId:result.endId, depth };
+    S.turn = "M"; S.laid = {}; S.draw = null; S.last = "";
+    commit();
+  });
 
   function setStatus(kind, text){
     const dot=document.getElementById("statusdot"), t=document.getElementById("statustext");
@@ -467,35 +1410,47 @@
   const svg = document.getElementById("map");
   const NS = "http://www.w3.org/2000/svg";
   const el = (tag, attrs, parent) => { const n=document.createElementNS(NS,tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if(parent) parent.appendChild(n); return n; };
-  const poly = pts => pts.map(([lo,la])=>px(lo,la).map(v=>v.toFixed(1)).join(",")).join(" ");
 
   function drawMap(){
     el("rect",{x:0,y:0,width:1060,height:620,fill:"var(--land)"},svg);
-    const g = el("g",{stroke:"var(--line)","stroke-width":1,"stroke-dasharray":"2 6",opacity:.7},svg);
-    for (let lo=6; lo<=20; lo+=2){ const [x]=px(lo,52); el("line",{x1:x,y1:0,x2:x,y2:620},g); }
-    for (let la=51; la<=54; la+=1){ const [,y]=px(10,la); el("line",{x1:0,y1:y,x2:1060,y2:y},g); }
-    for (let la=51; la<=53; la+=1){ const [,y]=px(10,la); const t=el("text",{x:1052,y:y-5,"text-anchor":"end",class:"geo-label"},svg); t.textContent=la+"°N"; }
-    const seaAttrs = {fill:"var(--sea)",stroke:"var(--coast)","stroke-width":1.5,"stroke-linejoin":"round"};
-    el("polygon",Object.assign({points:poly([[2,55.2],[2,51.3],[3.6,51.6],[4.1,52.0],[4.5,52.5],[4.7,52.95],[5.0,53.25],[5.8,53.42],[6.9,53.42],[7.3,53.68],[8.2,53.55],[8.55,53.85],[8.9,54.05],[8.75,54.5],[8.6,55.2]])},seaAttrs),svg);
-    el("polygon",Object.assign({points:poly([[10.3,55.2],[10.8,54.3],[10.9,53.97],[11.5,54.05],[12.1,54.18],[12.8,54.4],[13.4,54.45],[13.8,54.1],[14.25,53.93],[15.0,54.05],[16.2,54.3],[17.5,54.75],[18.6,54.75],[19.6,55.2]])},seaAttrs),svg);
-    [["North Sea",150,70],["Baltic Sea",700,40],["Nederland",70,560],["Deutschland",430,605],["Polska",930,580]].forEach(([s,x,y])=>{ const t=el("text",{x,y,"text-anchor":"middle",class:"geo-label"},svg); t.textContent=s; });
+    // a plain reference grid — the real geography varies per trip (this map
+    // spans anything from two neighbouring cities to opposite sides of the
+    // planet), so there's no fixed coastline/region labels to draw here.
+    const g = el("g",{stroke:"var(--line)","stroke-width":1,"stroke-dasharray":"2 6",opacity:.5},svg);
+    for (let x=90; x<1060; x+=140) el("line",{x1:x,y1:0,x2:x,y2:620},g);
+    for (let y=80; y<620; y+=140) el("line",{x1:0,y1:y,x2:1060,y2:y},g);
 
     const rg = el("g",{},svg);
     ROUTES.forEach(r=>{
       const A=CITIES[r.a],B=CITIES[r.b];
       const ang = Math.atan2(B.y-A.y,B.x-A.x), deg = ang*180/Math.PI;
+      // parallel-lane offset: when several routes share the same A→B segment
+      // (this trip's "double track" stretches), nudge each one sideways,
+      // perpendicular to the segment, like adjacent tracks on a real board.
+      // The gap is wide enough that each lane's tap target (below) doesn't
+      // overlap its neighbour's — otherwise adjacent lanes would be
+      // impossible to tell apart with a tap or click.
+      const LANE_GAP = 20;
+      const laneOff = (r.lane - (r.lanes-1)/2) * LANE_GAP;
+      const px = -Math.sin(ang), py = Math.cos(ang);
+      const ox = px*laneOff, oy = py*laneOff;
+      const Ax=A.x+ox, Ay=A.y+oy, Bx=B.x+ox, By=B.y+oy;
       const trim=16, gap=6, L=r.len-2*trim, carL=(L-gap*(r.cars-1))/r.cars;
       const grp = el("g",{class:"route","data-id":r.id,tabindex:0,role:"button"},rg);
-      el("line",{class:"hit",x1:A.x,y1:A.y,x2:B.x,y2:B.y},grp);
+      // a single-lane segment keeps the full, easy-to-hit 28px tap width;
+      // a multi-lane segment narrows its tap width to fit within the lane
+      // gap above so neighbouring lanes never fight over the same tap.
+      const hitW = r.lanes > 1 ? Math.min(28, LANE_GAP - 3) : 28;
+      el("line",{class:"hit",style:`stroke-width:${hitW}px`,x1:Ax,y1:Ay,x2:Bx,y2:By},grp);
       for (let i=0;i<r.cars;i++){
         const d = trim + carL/2 + i*(carL+gap);
-        const cx = A.x + Math.cos(ang)*d, cy = A.y + Math.sin(ang)*d;
+        const cx = Ax + Math.cos(ang)*d, cy = Ay + Math.sin(ang)*d;
         el("rect",{class:"car",x:-carL/2,y:-7,width:carL,height:14,rx:3,fill:THEMES[r.t].c,"fill-opacity":.2,stroke:THEMES[r.t].c,transform:`translate(${cx.toFixed(1)} ${cy.toFixed(1)}) rotate(${deg.toFixed(2)})`},grp);
       }
       grp.addEventListener("click",()=>pickRoute(r.id));
       grp.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pickRoute(r.id);} });
     });
-    const cg = el("g",{},svg);
+    const cg = el("g",{style:"pointer-events:none"},svg);
     for (const k in CITIES){
       const c=CITIES[k];
       if (c.end){ el("circle",{cx:c.x,cy:c.y,r:15,fill:"none",stroke:"var(--accent)","stroke-width":2},cg); }
@@ -532,13 +1487,13 @@
   }
   // Cities already joined (by complete routes) to either end of the line.
   function reached(){
-    const seen = new Set(["AMS","WAW"]); let grew = true;
+    const seen = new Set([START_ID,END_ID]); let grew = true;
     while (grew){ grew = false;
       for (const r of ROUTES) if (isComplete(r.id) && (seen.has(r.a) !== seen.has(r.b))){ seen.add(r.a); seen.add(r.b); grew = true; } }
     return seen;
   }
   // Random draws keep the game moving: finish half-laid routes first, otherwise
-  // grow the line outward from Amsterdam or Warsaw. Tapping the map still picks anything.
+  // grow the line outward from either city. Tapping the map still picks anything.
   function drawRandom(){
     const skip = r => S.draw && r.id === S.draw.route;
     const open = openRoutes();
@@ -588,15 +1543,16 @@
 
   function cars(p){ let s=0; for (const id in S.laid) for (const o of S.laid[id]) if (o===p) s++; return s; }
   function winPath(){
-    const prev = {AMS:null}, q=["AMS"];
+    if (!S.setup) return null;
+    const prev = {[START_ID]:null}, q=[START_ID];
     while(q.length){
-      const c=q.shift(); if(c==="WAW") break;
+      const c=q.shift(); if(c===END_ID) break;
       ROUTES.forEach(r=>{ if(!isComplete(r.id)) return;
         const n = r.a===c ? r.b : r.b===c ? r.a : null;
         if(n && !(n in prev)){ prev[n]={from:c,route:r.id}; q.push(n); } });
     }
-    if(!("WAW" in prev)) return null;
-    const path=[]; let c="WAW"; while(prev[c]){ path.push(prev[c].route); c=prev[c].from; }
+    if(!(END_ID in prev)) return null;
+    const path=[]; let c=END_ID; while(prev[c]){ path.push(prev[c].route); c=prev[c].from; }
     return path;
   }
   let flashMsg="";
@@ -610,6 +1566,16 @@
   // ---------- render ----------
   const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   function render(){
+    document.getElementById("gameArea").hidden = !S.setup;
+    document.getElementById("setupScreen").hidden = !!S.setup;
+    if (!S.setup){ document.getElementById("idpick").hidden = true; return; }
+    if (!CITIES[START_ID] || tripSig !== (S.setup.startId+"|"+S.setup.endId+"|"+S.setup.routes.length)) applyTrip(S.setup);
+    PLAYERS = { M:{name:S.setup.names.M, color:"var(--p1)"}, S:{name:S.setup.names.S, color:"var(--p2)"} };
+    document.getElementById("idbtns").innerHTML = `
+      <button type="button" class="primary for-M" data-me="M">I'm ${esc(PLAYERS.M.name)}</button>
+      <button type="button" class="primary" style="background:var(--p2);border-color:var(--p2)" data-me="S">I'm ${esc(PLAYERS.S.name)}</button>`;
+    document.querySelectorAll("#idbtns [data-me]").forEach(b=>{ b.onclick=()=>setMe(b.dataset.me); });
+
     document.getElementById("idpick").hidden = !!ME;
     document.getElementById("whoamiBtn").textContent = ME ? `Playing as ${PLAYERS[ME].name} · switch` : "";
     const path = winPath();
@@ -638,7 +1604,7 @@
     });
     const doneN = ROUTES.filter(r=>isComplete(r.id)).length;
     document.getElementById("progress").innerHTML = path
-      ? `<b>Line complete.</b> Amsterdam and Warsaw are connected.`
+      ? `<b>Line complete.</b> ${esc(CITIES[START_ID].n)} and ${esc(CITIES[END_ID].n)} are connected.`
       : `<b>${doneN} of ${ROUTES.length}</b> routes complete · ${cars("M")+cars("S")} cars laid`;
 
     document.getElementById("legend").innerHTML = Object.keys(THEMES).map(k=>{
@@ -653,12 +1619,12 @@
       const m=cars("M"), s=cars("S");
       const winner = m===s ? null : (m>s?"M":"S");
       P.className="panel win";
-      P.innerHTML = `${lastLine}<div class="eyebrow">Arrived · Warszawa Centralna</div>
+      P.innerHTML = `${lastLine}<div class="eyebrow">Arrived · ${esc(CITIES[END_ID].n)}</div>
         <h2>The line is complete</h2>
         <p class="sub" style="color:var(--ink)">${label("M")} laid <b>${m}</b> cars and ${label("S")} laid <b>${s}</b>. ${winner ? `<b>${label(winner)}</b> ${verb(winner,"pick","picks")} the first date spot.` : `It's a tie, so you plan the first date together.`}</p>
         <p class="sub">The map has done its job. Next step is a real ticket.</p>
         <div class="actions"><button type="button" class="ghost" id="again">Play another round</button></div>`;
-      document.getElementById("again").onclick = ()=>{ S=fresh(); commit(); };
+      document.getElementById("again").onclick = ()=>{ const setup=S.setup; S=fresh(); S.setup=setup; commit(); };
       return;
     }
     P.className="panel";
@@ -758,7 +1724,7 @@
   const resetBtn=document.getElementById("reset"); let armed=false;
   resetBtn.onclick=()=>{
     if(!armed){ armed=true; resetBtn.textContent="Tap again to clear this game"; setTimeout(()=>{armed=false; resetBtn.textContent="Start a new game";},3000); return; }
-    armed=false; resetBtn.textContent="Start a new game"; S=fresh(); commit();
+    armed=false; resetBtn.textContent="Start a new game"; { const setup=S.setup; S=fresh(); S.setup=setup; } commit();
   };
 
   // invite link
@@ -770,7 +1736,6 @@
     catch(e){ fallback(); }
   };
 
-  drawMap();
   render();
   pull();
   setInterval(()=>{
