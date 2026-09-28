@@ -117,6 +117,7 @@
   .copybox{width:100%;min-height:120px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;font:13px/1.45 var(--mono)}
   .toast{font-size:13px;color:var(--accent);min-height:1.2em;margin:0}
   .lastmove{margin:0 0 2px;font-size:13px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;line-height:1.4}
+  .ratebox{border:1px solid var(--line);background:var(--panel-2);border-radius:12px;padding:10px 12px;margin:0 0 10px}
   .lastmove span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:2px}
   .payout{margin:0;font-size:13.5px;color:var(--muted)}
   .payout b{color:var(--ink)}
@@ -293,7 +294,7 @@
       <ol class="rules">
         <li><b>Draw for the other person.</b> On your turn, tap the big button for a random route, or pick one on the map.</li>
         <li><b>Send the card.</b> Copy the two questions into your chat. They answer one, or both if they're feeling brave.</li>
-        <li><b>They tap what they did.</b> One answer lays <b>1 car</b>, safe. Both answers go to you for a rating: 😐 0 cars, 🙂 2, 🔥 3.</li>
+        <li><b>They tap what they did.</b> One answer lays <b>1 car</b>, safe. Both answers go to you for a rating (whenever you have a moment, before you draw): 😐 1 car, 🙂 2, 🔥 3.</li>
         <li><b>Finish the line.</b> A route counts once all its cars are laid. When complete routes connect the two cities, whoever laid the most cars picks the first date.</li>
       </ol>
     </section>
@@ -1505,7 +1506,7 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
 
   // setup: null until someone fills in the trip form; then {names:{M,S}, cities, routes, startId, endId}.
   // laid[routeId] = ["M","S",...] — who laid each car on that route, in order.
-  const fresh = () => ({v:3, setup:null, laid:{}, turn:"M", used:{}, draw:null, last:""});
+  const fresh = () => ({v:3, setup:null, laid:{}, turn:"M", used:{}, draw:null, pend:{}, last:""});
 
   // a saved trip whose routes are missing their length / car count (an older
   // or different version wrote it) would otherwise turn into NaN everywhere.
@@ -1527,12 +1528,17 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
     if (st.v !== 3 && st.laid){
       st = { v:3, setup: LEGACY_SETUP, laid: st.laid, turn: st.turn, used: st.used, draw: st.draw, last: st.last };
     }
-    const out = {v:3, setup: fixRoutes(st.setup) || null, laid:{}, turn: st.turn==="S" ? "S" : "M", used: st.used || {}, draw: st.draw || null, last: st.last || ""};
+    const out = {v:3, setup: fixRoutes(st.setup) || null, laid:{}, turn: st.turn==="S" ? "S" : "M", used: st.used || {}, draw: st.draw || null, pend: {}, last: st.last || ""};
     if (out.setup && st.laid){
       const rb = Object.fromEntries((out.setup.routes||[]).map(r=>[r.id,r]));
       for (const id in st.laid) if (rb[id]) out.laid[id] = st.laid[id].slice(0, rb[id].cars);
       if (out.draw && (!rb[out.draw.route] || (out.laid[out.draw.route]||[]).length >= rb[out.draw.route].cars)) out.draw = null;
-      else if (out.draw && out.draw.status !== "rating") out.draw.status = "open";
+      // ratings still owed: {answererId: {route, qs}}; the other player rates them
+      for (const p of ["M","S"]){ const o = st.pend && st.pend[p]; if (o && rb[o.route] && Array.isArray(o.qs)) out.pend[p] = {route:o.route, qs:o.qs}; }
+      // older saves froze the game on the rater; turn that into a deferred rating
+      if (out.draw && out.draw.status === "rating"){
+        out.pend[out.draw.for] = {route:out.draw.route, qs:out.draw.qs}; out.turn = out.draw.for; out.draw = null;
+      } else if (out.draw) out.draw.status = "open";
     } else {
       out.laid = {}; out.draw = null;
     }
@@ -1709,7 +1715,8 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
   }
   function openRoutes(){ return ROUTES.filter(r=>!isComplete(r.id)); }
   const drawerOf = d => other(d.for);
-  const iDraw = () => !S.draw && ME === S.turn;
+  const owes = () => !!ME && !!S.pend[other(ME)];      // I still have to rate the other player's answers
+  const iDraw = () => !S.draw && ME === S.turn && !owes();
   const iAmDrawer = () => !!S.draw && ME === drawerOf(S.draw);
   const iAmAnswerer = () => !!S.draw && ME === S.draw.for;
 
@@ -1758,21 +1765,27 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
     {label:"Good answer",    emoji:"🙂", cars:2},
     {label:"Wow.",           emoji:"🔥", cars:3}
   ];
-  function lay(n, how){
-    const d = S.draw; if (!d) return;
-    const r = RB[d.route], p = d.for;
+  function lay(n, how, pendFor){
+    const d = pendFor ? S.pend[pendFor] : S.draw; if (!d) return;
+    const r = RB[d.route], p = pendFor || d.for;
     const arr = (S.laid[r.id] || []).slice();
     const room = r.cars - arr.length, k = Math.max(0, Math.min(n, room));
     for (let i=0;i<k;i++) arr.push(p);
     S.laid[r.id] = arr;
     const done = arr.length >= r.cars;
     S.last = `${PLAYERS[p].name} ${how} · ${k===0 ? "no cars this time" : `laid ${k} car${k===1?"":"s"}`} on ${routeName(r)}${done ? " — route complete" : ""}`;
-    S.turn = p;           // whoever answered draws next
-    S.draw = null; proxy = false; commit();
+    if (pendFor){ delete S.pend[pendFor]; }        // rating settled; the game carries on wherever it was
+    else { S.turn = p; S.draw = null; }             // whoever answered draws next, right away
+    proxy = false; commit();
   }
   function answerOne(){ lay(1, "answered one question"); }
-  function answerBoth(){ if(!S.draw) return; S.draw.status = "rating"; proxy = false; commit(); }
-  function rate(i){ const rt = RATINGS[i]; lay(rt.cars, `answered both (${rt.emoji} ${rt.label})`); }
+  function answerBoth(){
+    const d = S.draw; if(!d) return;
+    S.pend[d.for] = {route:d.route, qs:d.qs};      // rated later by the other player, before they draw
+    S.last = `${PLAYERS[d.for].name} answered both · ${PLAYERS[other(d.for)].name} rates it before their next draw`;
+    S.turn = d.for; S.draw = null; proxy = false; commit();
+  }
+  function rate(i){ const rt = RATINGS[i]; const a = other(ME); lay(rt.cars, `answered both (${rt.emoji} ${rt.label})`, a); }
 
   function cars(p){ let s=0; for (const id in S.laid) for (const o of S.laid[id]) if (o===p) s++; return s; }
   function winPath(){
@@ -1812,7 +1825,7 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
     document.getElementById("idpick").hidden = !!ME;
     document.getElementById("whoamiBtn").textContent = ME ? `Playing as ${PLAYERS[ME].name} · switch` : "";
     const path = winPath();
-    const myMove = !path && (iDraw() || (iAmAnswerer() && S.draw.status==="open") || (iAmDrawer() && S.draw.status==="rating"));
+    const myMove = owes() || !path && (iDraw() || iAmAnswerer() || owes());
     document.title = (myMove ? "● Your move · " : "") + "Drawn Closer";
 
     document.getElementById("players").innerHTML = ["M","S"].map(p=>{
@@ -1847,7 +1860,25 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
     }).join("");
 
     const P = document.getElementById("panel");
-    const lastLine = S.last ? `<p class="lastmove"><span>Last move</span>${esc(S.last)}</p>` : "";
+    let lastLine = S.last ? `<p class="lastmove"><span>Last move</span>${esc(S.last)}</p>` : "";
+    // ratings I owe / that are waiting on the other player
+    const pendMine = ME && S.pend[other(ME)], pendTheirs = ME && S.pend[ME];
+    let rateBlock = "";
+    if (pendMine){
+      const pr=RB[pendMine.route], pth=THEMES[pr.t], who=PLAYERS[other(ME)].name;
+      rateBlock = `<div class="ratebox"><div class="eyebrow">${esc(who)} answered both · ${esc(routeName(pr))}</div>
+        ${pendMine.qs.map(qi=>`<p class="q" style="margin:.25rem 0">• ${esc(pth.qs[qi])}</p>`).join("")}
+        <p class="sub"><b style="color:var(--ink)">How good were ${esc(who)}'s answers?</b> ${S.draw||S.turn!==ME ? "Rate whenever you like" : "Rate to unlock your draw"}.</p>
+        <div class="actions">${RATINGS.map((rt,i)=>`<button type="button" class="rate" data-i="${i}">${rt.emoji} ${esc(rt.label)}<small>${rt.cars} car${rt.cars===1?"":"s"}</small></button>`).join("")}</div></div>`;
+    } else if (pendTheirs){
+      rateBlock = `<p class="lastmove"><span>Waiting</span>${esc(PLAYERS[other(ME)].name)} will rate your last answers before their next draw. Keep going.</p>`;
+    }
+    const bindRates = () => document.querySelectorAll(".rate").forEach(b=>{ b.onclick=()=>rate(+b.dataset.i); });
+    if (path && (pendMine || pendTheirs)){
+      P.className="panel";
+      P.innerHTML = `${lastLine}<div class="eyebrow">Line complete · one rating left</div>${rateBlock}`;
+      bindRates(); return;
+    }
     if (path){
       const m=cars("M"), s=cars("S");
       const winner = m===s ? null : (m>s?"M":"S");
@@ -1867,9 +1898,11 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
       const drawer=S.turn, target=other(S.turn);
       const nothingLaid = cars("M")+cars("S")===0;
       const swap = nothingLaid ? `<button type="button" class="link" id="swapBtn">${drawer===ME ? `Let ${PLAYERS[target].name} draw first` : `I'll draw first`}</button>` : "";
-      if (drawer === ME){
+      if (drawer === ME && owes()){
+        P.innerHTML = `${lastLine}${rateBlock}<p class="sub">Then you can draw your next card.</p><p class="toast" id="toast">${esc(flashMsg)}</p>`;
+      } else if (drawer === ME){
         const cols = Object.values(THEMES).map(t=>`<span style="--c:${t.c}"></span>`).join("");
-        P.innerHTML = `${lastLine}<div class="eyebrow">Your turn</div>
+        P.innerHTML = `${lastLine}${rateBlock}<div class="eyebrow">Your turn</div>
           <h2>Draw a card for ${PLAYERS[target].name}</h2>
           <div class="empty"><div class="deck" aria-hidden="true">${cols}</div>
           <p class="sub">A random open route is picked, with two questions from its colour. Or tap a route on the map to choose it yourself.</p>
@@ -1878,12 +1911,13 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
           <p class="toast" id="toast">${esc(flashMsg)}</p></div>`;
         document.getElementById("drawBtn").onclick = drawRandom;
       } else {
-        P.innerHTML = `${lastLine}<div class="eyebrow">${PLAYERS[drawer].name}'s turn</div>
+        P.innerHTML = `${lastLine}${rateBlock}<div class="eyebrow">${PLAYERS[drawer].name}'s turn</div>
           <h2>${PLAYERS[drawer].name} is picking a card for you</h2>
           <p class="sub waiting"><span class="pulse" aria-hidden="true"></span>Your questions will appear here as soon as ${PLAYERS[drawer].name} draws.</p>
           ${swap}
           <p class="toast" id="toast">${esc(flashMsg)}</p>`;
       }
+      bindRates();
       const sb = document.getElementById("swapBtn");
       if (sb) sb.onclick = ()=>{ S.turn=other(S.turn); commit(); };
       return;
@@ -1898,30 +1932,21 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
           <p class="q">${esc(th.qs[qi])}</p></div></div>`).join("")}</div>`;
     const head = `<div class="route-head"><h2>${esc(routeName(r))}</h2>
         <span class="chip" style="--c:${th.c}"><i></i>${th.name} · ${have}/${r.cars} laid</span></div>`;
-    const payout = `<p class="payout">Answer one → <b>1 car</b>. Answer both → ${PLAYERS[drawerP].name} rates it: <b>0, 2 or 3 cars</b>.${room<3?` <span>(Only ${room} left on this route.)</span>`:""}</p>`;
+    const payout = `<p class="payout">Answer one → <b>1 car</b>. Answer both → ${PLAYERS[drawerP].name} rates it: <b>1, 2 or 3 cars</b>, whenever they get to it.${room<3?` <span>(Only ${room} left on this route.)</span>`:""}</p>`;
     let body = "";
 
-    if (d.status === "rating"){
-      if (ME === drawerP){
-        body = `<div class="eyebrow">${PLAYERS[answerer].name} went for both</div>${head}${tickets}
-          <p class="sub"><b style="color:var(--ink)">How good were ${PLAYERS[answerer].name}'s answers?</b> Be honest — it decides the cars.</p>
-          <div class="actions">${RATINGS.map((rt,i)=>`<button type="button" class="rate" data-i="${i}">${rt.emoji} ${esc(rt.label)}<small>${rt.cars} car${rt.cars===1?"":"s"}</small></button>`).join("")}</div>`;
-      } else {
-        body = `<div class="eyebrow">You went for both</div>${head}${tickets}
-          <p class="sub waiting"><span class="pulse" aria-hidden="true"></span>${PLAYERS[drawerP].name} is rating your answers now…</p>`;
-      }
-    } else if (ME === answerer){
+    if (ME === answerer){
       body = `<div class="eyebrow">Your card · drawn by ${PLAYERS[drawerP].name}</div>${head}${tickets}${payout}
         <p class="sub">Answer in your chat, then tell the game what you did:</p>
         <div class="actions">
           <button type="button" id="oneBtn">I answered one<small>+1 car, safe</small></button>
-          <button type="button" class="primary" id="bothBtn">I answered both<small>${PLAYERS[drawerP].name} rates it</small></button>
+          <button type="button" class="primary" id="bothBtn">I answered both<small>${PLAYERS[drawerP].name} rates it later</small></button>
         </div>`;
     } else {
       const proxyBlock = proxy
         ? `<div class="actions">
              <button type="button" id="oneBtn">${PLAYERS[answerer].name} answered one<small>+1 car, safe</small></button>
-             <button type="button" class="primary" id="bothBtn">Answered both<small>you rate it</small></button>
+             <button type="button" class="primary" id="bothBtn">Answered both<small>you rate it next</small></button>
            </div>`
         : `<p class="sub waiting"><span class="pulse" aria-hidden="true"></span>Waiting for ${PLAYERS[answerer].name} to answer and tap one or both.</p>
            <button type="button" class="link" id="proxyBtn">${PLAYERS[answerer].name} not in the app? Mark it yourself</button>`;
@@ -1935,7 +1960,7 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
         </div>
         <textarea class="copybox" id="copybox" readonly hidden aria-label="Card text to copy"></textarea>`;
     }
-    P.innerHTML = `${lastLine}${body}<p class="toast" id="toast">${esc(flashMsg)}</p>`;
+    P.innerHTML = `${lastLine}${rateBlock}${body}<p class="toast" id="toast">${esc(flashMsg)}</p>`;
 
     const on = (id, fn) => { const b=document.getElementById(id); if (b) b.onclick = fn; };
     on("copyBtn", ()=>{
