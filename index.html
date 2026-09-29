@@ -119,10 +119,6 @@
   .toast{font-size:13px;color:var(--accent);min-height:1.2em;margin:0}
   .lastmove{margin:0 0 2px;font-size:13px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;line-height:1.4}
   textarea.ansbox{width:100%;box-sizing:border-box;margin:6px 0;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font:inherit;resize:vertical}
-  .pwbox{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(0,0,0,.6);padding:16px}
-  .pwcard{width:min(100%,380px);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;display:grid;gap:10px}
-  .pwcard h3{margin:0;font-size:18px}
-  .pwcard input{padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font:inherit}
   #gtoast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,20px);max-width:min(92vw,420px);background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.35;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;box-shadow:0 6px 24px rgba(0,0,0,.35)}
   #gtoast.on{opacity:1;transform:translate(-50%,0)}
   button.shiny{display:flex;align-items:center;gap:12px;width:100%;margin:12px 0 4px;padding:12px 14px;text-align:left;cursor:pointer;color:var(--ink);border:1.5px solid transparent;border-radius:16px;
@@ -231,7 +227,6 @@
 </head>
 <body>
 
-<div id="pwbox" class="pwbox" hidden><form class="pwcard" id="pwForm"><h3 id="pwTitle"></h3><p class="sub" id="pwHelp"></p><input id="pwInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80" placeholder="passphrase"><p class="toast" id="pwErr"></p><div class="actions"><button type="submit" class="primary">Continue</button><button type="button" class="link" id="pwCancel">Cancel</button></div></form></div>
 <div class="wrap">
   <div class="brandbar">
     <span class="wordmark">Drawn Closer<span class="heart">♥</span></span>
@@ -318,8 +313,7 @@
 
     <section class="panel" id="historyBox" hidden>
       <h2>Our answers</h2>
-      <p class="hint" style="margin:0 0 8px">Encrypted on your phones with your passphrase. The server only stores unreadable text.</p>
-      <p class="hint" id="histPw" hidden style="margin:0 0 8px"><button type="button" class="link" id="histPwBtn">Enter passphrase to read these</button></p>
+      <p class="hint" style="margin:0 0 8px">Encrypted on your phones. The server only stores unreadable text, and only people with your full invite link can read it.</p>
       <details id="historyDet"><summary>Read back what you wrote</summary><div id="historyList"></div></details>
       <div class="actions"><button type="button" id="dlBtn">Download as a text file</button><button type="button" class="link" id="wipeBtn">Delete saved answers</button></div>
     </section>
@@ -1580,7 +1574,7 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
 
   // setup: null until someone fills in the trip form; then {names:{M,S}, cities, routes, startId, endId}.
   // laid[routeId] = ["M","S",...] — who laid each car on that route, in order.
-  const fresh = () => ({v:3, setup:null, laid:{}, turn:"M", used:{}, draw:null, pend:{}, log:[], mode:"classic", check:"", last:""});
+  const fresh = () => ({v:3, setup:null, laid:{}, turn:"M", used:{}, draw:null, pend:{}, log:[], mode:"classic", last:""});
 
   // a saved trip whose routes are missing their length / car count (an older
   // or different version wrote it) would otherwise turn into NaN everywhere.
@@ -1602,7 +1596,7 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
     if (st.v !== 3 && st.laid){
       st = { v:3, setup: LEGACY_SETUP, laid: st.laid, turn: st.turn, used: st.used, draw: st.draw, last: st.last };
     }
-    const out = {v:3, setup: fixRoutes(st.setup) || null, laid:{}, turn: st.turn==="S" ? "S" : "M", used: st.used || {}, draw: st.draw || null, pend: {}, log: Array.isArray(st.log) ? st.log : [], mode: st.mode==="reveal" ? "reveal" : "classic", check: typeof st.check==="string" ? st.check : "", last: st.last || ""};
+    const out = {v:3, setup: fixRoutes(st.setup) || null, laid:{}, turn: st.turn==="S" ? "S" : "M", used: st.used || {}, draw: st.draw || null, pend: {}, log: Array.isArray(st.log) ? st.log : [], mode: st.mode==="reveal" ? "reveal" : "classic", last: st.last || ""};
     if (out.setup && st.laid){
       const rb = Object.fromEntries((out.setup.routes||[]).map(r=>[r.id,r]));
       for (const id in st.laid) if (rb[id]) out.laid[id] = st.laid[id].slice(0, rb[id].cars);
@@ -1625,58 +1619,23 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
   const unb64 = s => Uint8Array.from(atob(s.replace(/-/g,"+").replace(/_/g,"/")), c=>c.charCodeAt(0));
   const KEYSLOT = "line-key-" + ROOM;
   let KEY = null;
-  const PWSLOT = "line-pw-" + ROOM;
-  const te = s => new TextEncoder().encode(s);
-  function readKeyText(){       // older invite links carried the key after #k=
+  function readKeyText(){
     const m = /[#&]k=([\w-]{20,})/.exec(location.hash);
     if (m){ try{ localStorage.setItem(KEYSLOT, m[1]); }catch(e){} return m[1]; }
     try{ return localStorage.getItem(KEYSLOT) || ""; }catch(e){ return ""; }
   }
-  async function deriveKey(pw){
-    const base = await crypto.subtle.importKey("raw", te(pw.trim().toLowerCase()), "PBKDF2", false, ["deriveKey"]);
-    return crypto.subtle.deriveKey({name:"PBKDF2", salt:te("line:"+ROOM), iterations:150000, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+  async function loadKey(txt){
+    try{ KEY = await crypto.subtle.importKey("raw", unb64(txt), "AES-GCM", false, ["encrypt","decrypt"]); }catch(e){ KEY = null; }
   }
-  async function ensureKey(){
-    let pw = ""; try{ pw = localStorage.getItem(PWSLOT) || ""; }catch(e){}
-    try{
-      if (pw) KEY = await deriveKey(pw);
-      else { const txt = readKeyText(); if (txt) KEY = await crypto.subtle.importKey("raw", unb64(txt), "AES-GCM", false, ["encrypt","decrypt"]); }
-    }catch(e){ KEY = null; }
-  }
-  // usable only if it also opens this game's check value (guards against a wrong stored passphrase)
-  const hasKey = () => !!KEY && !(S.check && plainCache[S.check] === false);
-  function askPass(creating, err){
-    return new Promise(res=>{
-      const box = document.getElementById("pwbox"), inp = document.getElementById("pwInput");
-      document.getElementById("pwTitle").textContent = creating ? "Choose a passphrase" : "Enter your game passphrase";
-      document.getElementById("pwHelp").textContent = creating
-        ? "Your answers get locked with it, on your phones, before they're saved. Pick something you both know. It isn't case-sensitive. The other phone will ask for it once."
-        : "This game uses a passphrase for the hidden answers. Enter the one you agreed on. This phone remembers it afterwards.";
-      document.getElementById("pwErr").textContent = err || "";
-      inp.value = ""; box.hidden = false; inp.focus();
-      const done = v => { box.hidden = true; document.getElementById("pwForm").onsubmit = null; document.getElementById("pwCancel").onclick = null; res(v); };
-      document.getElementById("pwForm").onsubmit = e=>{ e.preventDefault(); done(inp.value); };
-      document.getElementById("pwCancel").onclick = ()=>done(null);
-    });
-  }
-  async function needKey(){
-    if (hasKey()) return true;
-    const creating = !S.check; let err = "";
-    for (;;){
-      const pw = await askPass(creating, err); if (pw === null) return false;
-      if (pw.trim().length < 4){ err = "Use at least 4 characters."; continue; }
-      const k = await deriveKey(pw);
-      if (creating){ KEY = k; S.check = await encTexts(["ok"]); }
-      else {
-        let ok = false;
-        try{ const [iv,ct] = S.check.split("."); await crypto.subtle.decrypt({name:"AES-GCM", iv:unb64(iv)}, k, unb64(ct)); ok = true; }catch(e){}
-        if (!ok){ err = "That's not the passphrase this game uses."; continue; }
-        KEY = k;
-      }
-      try{ localStorage.setItem(PWSLOT, pw.trim().toLowerCase()); }catch(e){}
-      for (const c in plainCache) if (plainCache[c] === false) delete plainCache[c];
-      return true;
+  async function ensureKey(create){
+    let txt = readKeyText();
+    if (!txt && create){
+      txt = b64(crypto.getRandomValues(new Uint8Array(32)));
+      try{ localStorage.setItem(KEYSLOT, txt); }catch(e){}
+      history.replaceState(null, "", location.pathname + location.search + "#k=" + txt);
+      const iu = document.getElementById("inviteUrl"); if (iu) iu.value = location.href;
     }
+    if (txt) await loadKey(txt);
   }
   async function encTexts(arr){
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -1700,8 +1659,8 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
     })();
     return null;
   }
-  const keyReady = ensureKey().then(()=>{ render(); });
-  window.addEventListener("hashchange", ()=>{ ensureKey().then(()=>{ for (const k in plainCache) if (plainCache[k]===false) delete plainCache[k]; render(); }); });
+  const keyReady = ensureKey(false).then(()=>{ render(); });
+  window.addEventListener("hashchange", ()=>{ ensureKey(false).then(()=>{ for (const k in plainCache) if (plainCache[k]===false) delete plainCache[k]; render(); }); });
 
   let S = fresh();
   let rev = 0;
@@ -1743,7 +1702,7 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
     S.setup = { names:{M:n1||"Player 1", S:n2||"Player 2"}, cities:result.cities, routes:result.routes, startId:result.startId, endId:result.endId, depth };
     S.turn = "M"; S.laid = {}; S.draw = null; S.pend = {}; S.log = []; S.last = "";
     S.mode = (document.querySelector('input[name="mode"]:checked')||{}).value === "classic" ? "classic" : "reveal";
-    if (S.mode === "reveal") needKey().then(ok=>{ if (!ok) S.mode = "classic"; commit(); }); else commit();
+    if (S.mode === "reveal") ensureKey(true).then(commit); else commit();
   });
 
   function setStatus(kind, text){
@@ -2075,7 +2034,6 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
         <span><b>${th.name}</b><small>${th.desc}</small></span><span class="left">${left}/${all.length} open</span></div>`;
     }).join("");
 
-    if (S.check && KEY) getPlain(S.check);
     renderHistory();
     const P = document.getElementById("panel");
     let lastLine = S.last ? `<p class="lastmove"><span>Last move</span>${esc(S.last)}</p>` : "";
@@ -2106,7 +2064,7 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
         <p class="sub" style="color:var(--ink)">${label("M")} laid <b>${m}</b> cars and ${label("S")} laid <b>${s}</b>. ${winner ? `<b>${label(winner)}</b> ${verb(winner,"pick","picks")} the first date spot.` : `It's a tie, so you plan the first date together.`}</p>
         <p class="sub">The map has done its job. Next step is a real ticket.</p>
         <div class="actions"><button type="button" class="ghost" id="again">Play another round</button></div>`;
-      document.getElementById("again").onclick = ()=>{ const setup=S.setup, mode=S.mode, check=S.check; S=fresh(); S.setup=setup; S.mode=mode; S.check=check; commit(); };
+      document.getElementById("again").onclick = ()=>{ const setup=S.setup, mode=S.mode; S=fresh(); S.setup=setup; S.mode=mode; commit(); };
       return;
     }
     P.className="panel";
@@ -2149,16 +2107,14 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
       const qHtml = (withAns) => `<div class="tickets">${d.qs.map((qi,n)=>`
         <div class="ticket" style="--c:${th.c}"><div class="stub"><span>${th.short}</span></div>
           <div class="tbody"><div class="tmeta">Question ${n+1} of 2</div><p class="q">${esc(th.qs[qi])}</p>
-          ${withAns ? ["M","S"].map(p=>{ const A = getPlain(d.ans[p]); return `<p class="sub" style="margin:.35rem 0 0"><b style="color:var(--ink)">${esc(label(p))}:</b> ${A ? (A[n] ? esc(A[n]) : "<i>skipped</i>") : A===false ? "🔒 can't be read on this device. Enter the passphrase." : "…"}</p>`; }).join("") : ""}
+          ${withAns ? ["M","S"].map(p=>{ const A = getPlain(d.ans[p]); return `<p class="sub" style="margin:.35rem 0 0"><b style="color:var(--ink)">${esc(label(p))}:</b> ${A ? (A[n] ? esc(A[n]) : "<i>skipped</i>") : A===false ? "🔒 can't be read on this device. Open the full invite link." : "…"}</p>`; }).join("") : ""}
           </div></div>`).join("")}</div>`;
       let body = "";
       const both = d.ans.M && d.ans.S;
       if (!both){
-        if (!d.ans[ME] && !hasKey()){
+        if (!d.ans[ME] && !KEY){
           body = `<div class="eyebrow">One thing first</div>${head}${qHtml(false)}
-            <p class="sub">${esc(PLAYERS[d.by].name)} made this a write &amp; reveal card. Answers are locked with a passphrase you both know. Enter it once on this phone.</p>
-            <div class="actions"><button type="button" class="primary" id="pwBtn">Enter passphrase</button></div>
-            <div class="actions"><button type="button" class="link" id="chatBtn">Answer this one in chat instead</button></div>`;
+            <p class="sub">Answers are encrypted, and the key is inside the full invite link (the part after <b>#k=</b>). Open the link ${esc(PLAYERS[other(ME)].name)} sent in full on this phone, then come back.</p>`;
         } else if (!d.ans[ME]){
           if (draft.id !== d.id) draft = {id:d.id, a:["",""]};
           const wait = d.ans[oth] ? `<p class="sub">${esc(PLAYERS[oth].name)} has already answered. Nothing is shown until you have too.</p>` : `<p class="sub">You both answer these. Answers stay hidden until both of you are in.</p>`;
@@ -2172,7 +2128,6 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
         }
       } else if (d.rate[ME] == null){
         body = `<div class="eyebrow">Showdown</div>${head}${qHtml(true)}
-          ${hasKey() ? "" : `<div class="actions"><button type="button" class="primary" id="pwBtn">Enter passphrase to read</button></div>`}
           <p class="sub"><b style="color:var(--ink)">How open, honest or fun were ${esc(PLAYERS[oth].name)}'s answers?</b> This sets the cars they lay.</p>
           <div class="actions">${RATINGS.map((rt,i)=>`<button type="button" class="rate" data-i="${i}">${rt.emoji} ${esc(rt.label)}<small>${rt.cars} car${rt.cars===1?"":"s"}</small></button>`).join("")}</div>`;
       } else {
@@ -2182,7 +2137,6 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
       P.innerHTML = `${lastLine}${body}<p class="toast" id="toast">${esc(flashMsg)}</p>`;
       const on2 = (id, fn) => { const b=document.getElementById(id); if (b) b.onclick = fn; };
       P.querySelectorAll(".ansbox").forEach(a=>{ a.value = draft.a[+a.dataset.n]; a.oninput = ()=>{ draft.a[+a.dataset.n] = a.value; }; });
-      on2("pwBtn", ()=>{ const had=S.check; needKey().then(ok=>{ if (ok){ if (S.check!==had) commit(); else render(); } }); });
       on2("lockBtn", ()=>{
         const texts = draft.a.map(s=>s.trim());
         if (!texts.some(Boolean)){ flash("Write at least one answer first."); return; }
@@ -2249,12 +2203,11 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
     document.querySelectorAll(".rate").forEach(b=>{ b.onclick=()=>rate(+b.dataset.i); });
     on("revealBtn", ()=>{
       const id = d.route;
-      needKey().then(ok=>{
-        if (!ok) return;
+      ensureKey(true).then(()=>{
         const c = S.draw; if (!c || c.reveal || c.route !== id) return;
         Object.assign(c, {reveal:true, id:Math.random().toString(36).slice(2,9), by:drawerOf(c), ans:{M:null,S:null}, rate:{M:null,S:null}});
         proxy = false; commit();
-        flash("Reveal on for this card. The other phone will ask for the passphrase once.");
+        flash("Reveal on for this card. If the other phone can't read it, send the full invite link (ends with #k=…) from the bottom of the page.");
       });
     });
     on("oneBtn", answerOne);
@@ -2284,14 +2237,12 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
     const box = document.getElementById("historyBox");
     const show = !!S.setup && S.log.length>0;
     box.hidden = !show; if (!show) return;
-    document.getElementById("histPw").hidden = hasKey();
     document.getElementById("historyList").innerHTML = S.log.slice().reverse().map(e=>{
       const r=RB[e.route]; if(!r) return "";
       const th=THEMES[r.t], A={M:getPlain(e.ans.M), S:getPlain(e.ans.S)};
       return `<div class="ratebox"><div class="eyebrow">${esc(routeName(r))} · ${th.name}</div>${e.qs.map((qi,n)=>`<p class="q" style="margin:.25rem 0">${esc(th.qs[qi])}</p>${["M","S"].map(p=>`<p class="sub" style="margin:0 0 .25rem"><b style="color:var(--ink)">${esc(PLAYERS[p].name)}:</b> ${A[p] ? esc(A[p][n]||"skipped") : A[p]===false ? "🔒" : "…"}</p>`).join("")}`).join("")}</div>`;
     }).join("");
   }
-  document.getElementById("histPwBtn").onclick = ()=>{ const had=S.check; needKey().then(ok=>{ if (ok){ if (S.check!==had) commit(); else render(); } }); };
   document.getElementById("dlBtn").onclick = ()=>{
     const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([historyText()],{type:"text/plain"}));
     a.download="our-answers.txt"; document.body.appendChild(a); a.click(); a.remove();
@@ -2305,14 +2256,14 @@ function buildRoute(startQuery, endQuery, db, extraQueries, depth){
   // switch answer mode between cards
   document.getElementById("modeBtn").onclick = ()=>{
     if (S.mode === "reveal"){ S.mode = "classic"; commit(); flash("New cards will be answered in your chat."); return; }
-    needKey().then(ok=>{ if (!ok) return; S.mode = "reveal"; commit(); flash("New cards will be write & reveal. The other phone will ask for the passphrase once."); });
+    ensureKey(true).then(()=>{ S.mode = "reveal"; commit(); flash("New cards will be write & reveal. Send the other person the full invite link (ends with #k=…) so their phone can read the answers."); });
   };
 
   // reset with confirm
   const resetBtn=document.getElementById("reset"); let armed=false;
   resetBtn.onclick=()=>{
     if(!armed){ armed=true; resetBtn.textContent="Tap again to clear this game"; setTimeout(()=>{armed=false; resetBtn.textContent="Start a new game";},3000); return; }
-    armed=false; resetBtn.textContent="Start a new game"; { const setup=S.setup, mode=S.mode, check=S.check; S=fresh(); S.setup=setup; S.mode=mode; S.check=check; } commit();
+    armed=false; resetBtn.textContent="Start a new game"; { const setup=S.setup, mode=S.mode; S=fresh(); S.setup=setup; S.mode=mode; } commit();
   };
 
   // invite link
